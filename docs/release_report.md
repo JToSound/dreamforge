@@ -285,3 +285,34 @@ Date: 2026-08-24 (continuation session).
   contexts deterministic. CLI usage unchanged.
 - The dashboard's fail-closed path was widened from ImportError_-only to any
   exception after a malformed-export test exposed a JSONDecodeError leak.
+
+---
+
+# Session 6 Addendum — M4 sweeps + ensembles
+
+Date: 2026-08-24 (continuation session).
+
+## What was done
+
+- `simulation/sweeps.py`: ParameterSweep over explicit single-field grids.
+  Documented deterministic cell ordering (sorted field names, declared value
+  order), MAX_CELLS=64 runtime cap, empty grids refused, per-cell canonical
+  comparison hashes embedded in the result. Byte-identical reruns asserted.
+- `simulation/ensemble.py`: run_ensemble derives member seeds by integer
+  shifts of one base config; duplicate effective seeds refused BEFORE any
+  execution; aggregates (mean/min/max) computed strictly from member metrics;
+  distinct-trace-hash count reported. Exact §1.2 labeling everywhere.
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **137 passed** (10 new) |
+| ruff / black / mypy strict | All checks passed / unchanged / no issues |
+
+## Honest notes
+
+- Aggregates summarize simulation outputs only; no distributional or
+  statistical-population claims are made anywhere.
+- Sweep cells are full counterfactual pairs, so sweep cost is linear in
+  cells x 2 runs - hence the explicit cap.

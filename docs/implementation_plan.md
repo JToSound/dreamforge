@@ -309,3 +309,36 @@ exact; output differences labeled model-conditional everywhere.
 B: bundled demo export renders without simulator/provider execution (AppTest);
 every view carries the exact visible labels; keyboard/theme notes documented.
 Full suite green; ruff/black/mypy clean; separate commits per workstream.
+
+---
+
+# Session 6 Plan (2026-08-24, M4: parameter sweeps + ensembles)
+
+## Objective
+
+Continue M4: deterministic parameter sweeps over the counterfactual machinery,
+and fixed-seed ensemble runs with aggregate metrics. Both are pure post-hoc
+orchestration over the existing engine - no new scientific claims, everything
+labeled mechanistic_proxy.
+
+## In scope
+
+- simulation/sweeps.py: ParameterSweep - explicit grid of field overrides with
+  deterministic cell ordering; each cell is a full CounterfactualComparison.
+- simulation/ensemble.py: EnsembleRun - N member seeds from declared integer
+  shifts of one base config; per-member RunMetrics + mean/min/max aggregates;
+  duplicate effective seeds refused; labeled mechanistic_proxy.
+- Unit tests: ordering determinism, aggregation invariants, label contract,
+  refusal paths. Docs updates.
+
+## Out of scope
+
+Multi-night persistence/theme recurrence (needs a run repository port),
+fictional pharmacology (deferred), LangGraph agents, sweep UI.
+
+## Acceptance criteria
+
+- Sweep cells execute in sorted documented order; identical grids produce
+  identical result bytes.
+- Ensemble aggregates provably derive from member metrics; labels exact.
+- Full suite green; ruff/black/mypy clean.

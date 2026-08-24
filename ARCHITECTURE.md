@@ -97,6 +97,18 @@ explicit variation allowlist (`run_seed`, `epoch_seconds`, `total_ticks`,
 output differences as model-conditional — never causal biological effects
 (§5.5). Deterministic: identical specs produce identical comparison bytes.
 
+## Sweeps and ensembles (M4)
+
+- `simulation/sweeps.py` — `ParameterSweep`: explicit single-field grids with
+  documented cell ordering (fields sorted, values in declared order), a 64-cell
+  runtime cap, and per-cell canonical-byte hashes. Identical grids produce
+  identical sweep bytes.
+- `simulation/ensemble.py` — `run_ensemble`: N members from declared integer
+  seed shifts of one base config; duplicate effective seeds refused before any
+  run; mean/min/max aggregates computed over member metrics only. Everything
+  carries the exact §1.2 mechanistic_proxy label and the model-conditional
+  disclaimer.
+
 ## Dashboard (M3)
 
 `visualization/dashboard.py` (Streamlit) renders **verified exports only** —
