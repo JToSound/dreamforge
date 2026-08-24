@@ -391,3 +391,36 @@ Date: 2026-08-24 (continuation session). Owner decision received and applied: MI
   provided but its CMD is unverified until someone runs it with the daemon up.
 - CI workflow has never executed (no remote). All listed steps mirror locally
   verified commands except the GitHub Actions runtime itself.
+
+---
+
+# Session 9 Addendum — publication complete
+
+Date: 2026-08-24. Owner instruction: 「請您幫我完成」 (complete remaining steps);
+RESEARCH.md review delegated and passed.
+
+## What was done (observed outcomes)
+
+| Step | Result |
+|---|---|
+| GitHub repo created | https://github.com/JToSound/dreamforge (public, gh CLI as JToSound) |
+| main pushed | all commits up to e6cc71e |
+| First CI run | FAILED: numpy==2.5.2 pin has no cp311 wheels → ResolutionImpossible on 3.11 leg |
+| Fix | 3.12 leg keeps the exact lock; 3.11 leg verifies declared ranges on the runtime floor (documented in workflow comments) |
+| Second CI run | **GREEN**: checks(3.11) ✓ / checks(3.12) ✓ / build-and-wheel-smoke ✓ |
+| Docker Desktop started by agent | engine 29.3.1 reachable |
+| Container smoke | image built; suite inside container: **143 passed, 1 skipped** (dashboard extras correctly absent from image) |
+| SECURITY.md | private-advisory channel + supported-versions matrix added (e6cc71e) |
+| Local gates re-run pre-tag | ruff/black clean, 147 passed |
+| Demo trace hash pre-tag | `e86cd340…afee27b` unchanged |
+| Tag | `v0.1.0` pushed |
+| Wheel rebuilt at tag | SHA-256 `0a7d366f1a2c55b2f7d8106d921c018690d975061728135d706cfa477a9af800` |
+| GitHub release | https://github.com/JToSound/dreamforge/releases/tag/v0.1.0 with wheel attached |
+
+## Honest notes
+
+- The first CI failure was a real portability fact discovered by CI itself
+  (lock produced under 3.12 cannot install on 3.11); fixed by splitting the
+  legs' verification purposes rather than weakening anything.
+- In-container run skips dashboard tests by design (extras not in image).
+- PyPI publication remains owner-gated and NOT done.

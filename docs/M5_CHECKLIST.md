@@ -1,6 +1,8 @@
-# M5 Release Checklist — status as of 2026-08-24
+# M5 Release Checklist — v0.1.0 PUBLISHED 2026-08-24
 
-Owner decision recorded: **MIT license** (LICENSE committed; wheel metadata verified).
+Owner decisions recorded: **MIT license**; RESEARCH.md wording review delegated
+to the agent reviewer (passed — no overstated claims, every row carries an
+evidence grade + limitation); release authorized.
 
 Legend: ✅ done with observed evidence · ⏳ pending (owner action or external event) · ❌ not applicable
 
