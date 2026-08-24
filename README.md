@@ -17,8 +17,34 @@ and the mandatory offline narrative provider with labeled report blocks. See
 [`ARCHITECTURE.md`](ARCHITECTURE.md), [`RESEARCH.md`](RESEARCH.md),
 [`LIMITATIONS.md`](LIMITATIONS.md), and `docs/`.
 
-**Not yet built** (by explicit scope control): API, cloud/LLM provider
-adapters (protocol + offline mock only), LangGraph agents, parameter-sweep UI.
+**Not yet built** (by explicit scope control): API, plugins, notebooks,
+Anthropic-native adapter shape.
+
+## Optional: local / OpenAI-compatible narrative provider (opt-in)
+
+The offline mock is always the default. To use a local model via Ollama's
+OpenAI-compatible endpoint (or any `/chat/completions` service), construct the
+adapter explicitly in your own script — nothing is enabled by configuration
+alone:
+
+```python
+from dreamforge.core.providers.narrative import NarrativeRequest
+from dreamforge.integrations.openai_compat import OpenAICompatConfig, OpenAICompatProvider
+from dreamforge.integrations.transport import UrllibTransport
+
+config = OpenAICompatConfig(
+    base_url="http://127.0.0.1:11434/v1",  # Ollama loopback example
+    model="llama3.2:3b",
+    timeout_seconds=20,
+    max_retries=2,
+)
+provider = OpenAICompatProvider(config, UrllibTransport())
+response = provider.generate(request)  # request = validated NarrativeRequest
+```
+
+Guarantees (ADR 0005): allowlisted projection only; strict response schema;
+per-attempt timeout; bounded retries then fail-closed; errors redacted to
+status code + response hash; every response labeled `generative_interpretation`.
 
 ## Dashboard (optional extras)
 

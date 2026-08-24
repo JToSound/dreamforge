@@ -412,3 +412,35 @@ actually runs, real provider adapters (ADR 0003).
 
 All executed items have observed outcomes in the release report; anything not
 run is listed as NOT RUN without success language. Suite stays green.
+
+---
+
+# Session 10 Plan (2026-08-24, post-release: land ADR 0003's deferred adapters)
+
+## Objective
+
+Land the deferred narrative-provider adapters per the full contract, keeping
+the core pure (zero network) and every new property testable offline.
+
+## In scope
+
+- docs/adr/0005: adapter landing decision.
+- dreamforge/integrations/: HttpTransport protocol, UrllibTransport
+  (stdlib-only, strict timeout), OpenAICompatProvider with schema validation,
+  bounded retries + injectable sleep, redacted typed errors, honest egress
+  classification, disabled-by-default explicit construction.
+- Offline tests via scripted FakeTransport: success, retry-then-success,
+  retries-exhausted, malformed response redaction, budget refusal BEFORE any
+  request, provider outage leaving core bytes untouched.
+
+## Out of scope
+
+PyPI publishing, dashboard provider UI, env-var enablement, Anthropic-native
+adapter shape.
+
+## Acceptance criteria
+
+- No request is ever made when config/budget validation fails.
+- Malformed responses raise typed errors carrying status code + response hash
+  only; retry bounds proven by counting attempts on fakes.
+- Core suite stays green; ruff/black/mypy clean; CI green after push.

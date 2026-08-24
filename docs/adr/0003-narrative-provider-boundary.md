@@ -1,6 +1,8 @@
 # ADR 0003 — Narrative-provider boundary and LLM isolation
 
-Status: Accepted
+Status: Accepted (amended 2026-08-24: first networked adapters landed under
+`dreamforge/integrations/` per ADR 0005 — the core remains network-free; the
+mock stays the default; adapters are explicit-construction only)
 Date: 2026-08-24
 
 ## Context

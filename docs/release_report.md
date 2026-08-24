@@ -424,3 +424,43 @@ RESEARCH.md review delegated and passed.
   legs' verification purposes rather than weakening anything.
 - In-container run skips dashboard tests by design (extras not in image).
 - PyPI publication remains owner-gated and NOT done.
+
+---
+
+# Session 10 Addendum — ADR 0003 deferred adapters landed (post-0.1.0)
+
+Date: 2026-08-24. CI on latest main confirmed green before starting.
+
+## What was done
+
+- ADR 0005 accepted: adapters live OUTSIDE the core (`dreamforge/integrations/`),
+  transport-injected, explicit-construction only, mock stays default.
+- `integrations/transport.py`: HttpTransport protocol + UrllibTransport
+  (stdlib-only, strict per-attempt timeout; transport failures redacted at
+  the seam).
+- `integrations/openai_compat.py`: OpenAICompatProvider over any
+  /chat/completions endpoint (incl. Ollama /v1) - frozen caller-supplied
+  config, budget enforced BEFORE any request, strict response schema,
+  bounded retries (injectable backoff), redacted typed errors
+  (status + sha256 only, never bodies), honest egress classification.
+- 14 offline tests via scripted FakeTransport: success/hashes/egress,
+  auth header presence rules, transient-then-success, exhaustion bound
+  proven by attempt counting, transport-failure counting, non-retryable
+  immediate fail with redaction, malformed/wrong-shape/empty completions,
+  budget-violation zero-request proof, demo/dashboard never import the
+  integration package (clean subprocess probe), frozen config immutability.
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **161 passed** |
+| ruff / black / mypy strict | All checks passed / unchanged / no issues |
+
+## Honest notes
+
+- Two test-design bugs found and fixed during development: a wire-schema
+  nested model tripped extra="forbid" on unknown choice fields (now the one
+  consumed path is validated, rest deliberately ignored); the
+  disabled-by-default probe originally ran in-process where pytest itself had
+  already imported the package (now a clean subprocess).
