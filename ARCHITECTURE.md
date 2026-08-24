@@ -109,6 +109,16 @@ output differences as model-conditional — never causal biological effects
   carries the exact §1.2 mechanistic_proxy label and the model-conditional
   disclaimer.
 
+## Multi-night persistence and theme recurrence (M4)
+
+`simulation/run_repository.py` provides the §3.1 `RunRepository` port with a
+JSON-file implementation OUTSIDE the core: small per-night summaries (token
+ids, stage sequence, trace hash) stored as canonical DQCJ-1 bytes, strict
+run-id pattern plus resolved-path containment (traversal refused typed),
+sorted listings. `theme_recurrence()` derives cross-night recurring-token
+counts deterministically (count desc, then id) — counts only, no meaning
+inference anywhere.
+
 ## Dashboard (M3)
 
 `visualization/dashboard.py` (Streamlit) renders **verified exports only** —

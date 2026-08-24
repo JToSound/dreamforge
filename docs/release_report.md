@@ -316,3 +316,34 @@ Date: 2026-08-24 (continuation session).
   statistical-population claims are made anywhere.
 - Sweep cells are full counterfactual pairs, so sweep cost is linear in
   cells x 2 runs - hence the explicit cap.
+
+---
+
+# Session 7 Addendum — M4 completion: run repository + theme recurrence
+
+Date: 2026-08-24 (continuation session).
+
+## What was done
+
+- `simulation/run_repository.py`: StoredNightRecord (small frozen summary),
+  RunRepository protocol (§3.1 port), JsonFileRunRepository outside the core -
+  canonical-bytes storage via temp+replace, strict run-id pattern, resolved-
+  path containment (typed traversal refusal), sorted listing/load_all.
+- `theme_recurrence()`: deterministic recurring-token report across stored
+  nights - distinct-night counts, min_nights filter, ordering by count desc
+  then token id; counts only, explicitly no 'meaning' inference.
+- Evidence: 10 new unit tests pass (round-trip byte stability, traversal
+  refusals, recurrence math/ordering/labels).
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **147 passed** |
+| ruff / black / mypy strict | All checks passed / unchanged / no issues |
+
+## Honest notes
+
+- Night records store summaries, not full traces; exports remain the full-
+  fidelity artifact. A test initially used ids shorter than the documented
+  pattern - the pattern held, the fixture was fixed.

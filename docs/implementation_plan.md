@@ -342,3 +342,39 @@ fictional pharmacology (deferred), LangGraph agents, sweep UI.
   identical result bytes.
 - Ensemble aggregates provably derive from member metrics; labels exact.
 - Full suite green; ruff/black/mypy clean.
+
+---
+
+# Session 7 Plan (2026-08-24, M4 completion: run repository + theme recurrence)
+
+## Objective
+
+Close M4's remaining items (multi-night synthetic persistence, theme
+recurrence) by introducing the RunRepository port required by section 3.1,
+with a JSON-file implementation outside the core (the core itself never does
+filesystem work).
+
+## In scope
+
+- simulation/run_repository.py: StoredNightRecord (frozen model: night index,
+  run_id, trace hash, selected token ids, final metrics subset),
+  RunRepository protocol, JsonFileRunRepository with strict filename safety
+  (run_id pattern + path-containment via resolved parents), canonical-bytes
+  storage, sorted listing.
+- theme_recurrence(nights): deterministic cross-night recurring-token report -
+  pairwise consecutive-night intersections plus per-token appearance counts;
+  exact mechanistic_proxy labeling; no interpretation beyond counts.
+- Unit tests: round-trip, traversal refusal, ordering, recurrence math,
+  label contract.
+
+## Out of scope
+
+Dashboard integration for multi-night views, real provider adapters,
+pharmacology scenarios, M5 release chores.
+
+## Acceptance criteria
+
+- Store/load round-trip byte-stable; traversal-style ids refused typed.
+- Recurrence output derives provably from stored records; identical inputs ->
+  identical bytes; labels exact.
+- Full suite green; ruff/black/mypy clean.
