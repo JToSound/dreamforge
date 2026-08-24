@@ -16,3 +16,7 @@ hypothesis==6.165.10
 ruff==0.16.4
 black==26.5.1
 mypy==2.3.1
+
+# dashboard extras (optional; core never imports these)
+streamlit==1.62.0
+plotly==6.9.0

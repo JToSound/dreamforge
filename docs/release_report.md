@@ -235,3 +235,53 @@ Date: 2026-08-24 (continuation session).
   against third-party tooling by definition.
 - The demo's exported hashes changed from earlier sessions because the export
   set itself changed (report.json added); the core trace hash is unchanged.
+
+---
+
+# Session 5 Addendum — M4 counterfactuals + M3 dashboard (parallel)
+
+Date: 2026-08-24 (continuation session).
+
+## Workstream A: Counterfactual engine (M4 groundwork)
+
+- `simulation/counterfactual.py`: `CounterfactualSpec` (variation allowlist:
+  run_seed/epoch_seconds/total_ticks/initial_stage; anything else refused),
+  `run_counterfactual` executes the control/changed pair with the component
+  RNG policy untouched, enumerates changed parameters EXACTLY from validated
+  payloads, and returns a fully labeled comparison carrying the
+  model-conditional disclaimer (§5.5). Zero-difference specs are refused.
+- Evidence: 7 new unit tests pass, including byte-identical determinism of
+  the comparison and exact single-parameter enumeration.
+
+## Workstream B: Dashboard (M3 start)
+
+- ADR 0004 accepted: M2's gate evaluated against the implemented surface
+  (offline mock-only provider; non-existent cloud adapters = strongest form
+  of "disabled"); deferred adapters tracked separately; M3 authorized.
+- `visualization/loader.py` imports NO engine/provider code (subprocess probe
+  asserts ENGINE_NOT_LOADED); `visualization/dashboard.py` renders verified
+  exports only — ANY verification fault shows an error instead of charts
+  (fail closed).
+- Views carry exact §1.2 labels: stage timeline + replay markers,
+  proxy timeline, features/score block, narrative block, verification table;
+  disclaimer in header banner and footer.
+- `DASHBOARD.md`: one startup command, color-vision review (position/labels
+  carry information, not hue), keyboard behaviour, light/dark theme notes.
+- streamlit 1.62.0 / plotly 6.9.0 pinned in constraints.txt; optional
+  `dashboard` extra declared in pyproject.toml.
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **127 passed** (7 cf + 6 dashboard/loader new) |
+| ruff / black / mypy strict | All checks passed / unchanged / no issues |
+| Streamlit AppTest smoke | labels render; tampered export -> "Verification FAILED", no charts |
+
+## Honest notes
+
+- AppTest initially failed because it inherits pytest's sys.argv; export
+  resolution now prefers query parameters over argv, making hosted/tested
+  contexts deterministic. CLI usage unchanged.
+- The dashboard's fail-closed path was widened from ImportError_-only to any
+  exception after a malformed-export test exposed a JSONDecodeError leak.

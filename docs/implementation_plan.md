@@ -270,3 +270,42 @@ Dashboard/API (M3+, gated), provider adapters (ADR 0003), counterfactuals (M4).
 - Round trip byte-identical; tampering any report field fails typed.
 - v1 exports still verify; v2 without report.json refuses.
 - Full suite green; coverage >=85%; ruff/black/mypy clean.
+
+---
+
+# Session 5 Plan (2026-08-24, parallel: M4 counterfactuals + M3 dashboard)
+
+## Objective
+
+Two bounded workstreams in one session, committed separately:
+(A) M4 groundwork - fixed-seed CounterfactualEngine per §5.5 (control/changed
+runs, enumerated changed parameters, model-conditional disclaimer);
+(B) M3 dashboard start - offline Streamlit viewer over verified exports with
+the §1.2 labels everywhere and an accessibility/theme document.
+
+Gate-order note: M2's gate ("offline demo; provider outage cannot affect core;
+labeled creative metadata; cloud disabled by default") is satisfiable NOW by
+observed evidence because the only provider is the offline mock and cloud
+adapters do not exist (ADR 0003). ADR 0004 records this interpretation and
+authorizes starting M3. The optional real-provider items stay deferred and
+are not claimed as passed.
+
+## In scope
+
+A: simulation/counterfactual.py + tests (determinism, invariants, disclaimer).
+B: docs/adr/0004; visualization/loader.py (no engine import); visualization/dashboard app
+(single-file Streamlit); DASHBOARD.md accessibility doc; AppTest smoke + label checks;
+pyproject entry point + constraints pinning for streamlit/plotly.
+
+## Out of scope
+
+Real/cloud providers, LangGraph agents, parameter sweeps UI, multi-run DB,
+3D/multi-person anything, API server.
+
+## Acceptance criteria
+
+A: same seeds+configs -> identical comparison bytes; changed-parameter list
+exact; output differences labeled model-conditional everywhere.
+B: bundled demo export renders without simulator/provider execution (AppTest);
+every view carries the exact visible labels; keyboard/theme notes documented.
+Full suite green; ruff/black/mypy clean; separate commits per workstream.

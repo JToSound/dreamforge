@@ -17,8 +17,18 @@ and the mandatory offline narrative provider with labeled report blocks. See
 [`ARCHITECTURE.md`](ARCHITECTURE.md), [`RESEARCH.md`](RESEARCH.md),
 [`LIMITATIONS.md`](LIMITATIONS.md), and `docs/`.
 
-**Not yet built** (by explicit scope control): API, dashboard, cloud/LLM
-provider adapters (protocol + offline mock only), plugins, notebooks.
+**Not yet built** (by explicit scope control): API, cloud/LLM provider
+adapters (protocol + offline mock only), LangGraph agents, parameter-sweep UI.
+
+## Dashboard (optional extras)
+
+```bash
+".venv/Scripts/python.exe" -m pip install -c constraints.txt streamlit plotly
+".venv/Scripts/python.exe" -m streamlit run src/dreamforge/visualization/dashboard.py -- exports/demo_8h
+```
+
+Renders verified exports only; accessibility/theme documentation in
+[`DASHBOARD.md`](DASHBOARD.md).
 
 ## What it simulates (and what that means)
 

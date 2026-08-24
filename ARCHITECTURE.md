@@ -83,9 +83,28 @@ not exist yet and cannot be reached from the core.
 - `Clock` protocol — `FixedClock` implementation (tests/demos). Real clocks are
   permitted only outside core hashing and are not yet wired anywhere.
 - `EventStore` protocol — in-memory append-only implementation.
-Other ports (`NarrativeProvider`, `ArtifactStore`, `GraphSerializer`,
+- `NarrativeProvider` protocol — offline deterministic `MockNarrativeProvider`
+  (ADR 0003); cloud/local adapters deliberately not implemented yet.
+Other ports (`ArtifactStore`, `GraphSerializer` beyond v1,
 `CanonicalSerializer` beyond DQCJ-1, `RunRepository`) arrive with their
 consumers in later milestones.
+
+## Counterfactuals (M4 groundwork)
+
+`simulation/counterfactual.py` runs fixed-seed control/changed pairs over an
+explicit variation allowlist (`run_seed`, `epoch_seconds`, `total_ticks`,
+`initial_stage`), enumerates every changed parameter exactly, and labels all
+output differences as model-conditional — never causal biological effects
+(§5.5). Deterministic: identical specs produce identical comparison bytes.
+
+## Dashboard (M3)
+
+`visualization/dashboard.py` (Streamlit) renders **verified exports only** —
+loading runs the full fail-closed import verification; the loader imports no
+engine/provider code. Every view carries the exact §1.2 visible labels.
+Startup command, color-vision review, keyboard behaviour, and theme notes are
+documented in [`DASHBOARD.md`](DASHBOARD.md). Gate-order interpretation for
+starting M3 is recorded in ADR 0004.
 
 ## Determinism summary
 
