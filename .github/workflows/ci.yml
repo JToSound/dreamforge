@@ -29,10 +29,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package + toolchain (pinned)
+        if: matrix.python-version == '3.12'
         run: |
           python -m pip install --upgrade pip
           python -m pip install -c constraints.txt -e .
           python -m pip install -c constraints.txt pytest pytest-cov hypothesis ruff black mypy
+
+      # 3.11 job: the lock file was produced under CPython 3.12 (numpy>=2.5
+      # has no 3.11 wheels), so this leg verifies the DECLARED dependency
+      # ranges resolve and pass on the 3.11 floor instead.
+      - name: Install package + toolchain (range resolution, py3.11)
+        if: matrix.python-version == '3.11'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest pytest-cov hypothesis ruff black mypy
 
       - name: Ruff (lint)
         run: python -m ruff check src tests examples scripts
