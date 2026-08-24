@@ -192,10 +192,11 @@ class TestBudgetAndDefaults:
         assert transport.calls == []
 
     def test_disabled_by_default_nothing_constructs_at_import(self) -> None:
-        """Demo + dashboard must never pull the networked adapters in.
+        """The demo must never pull the networked adapters in.
 
         Checked in a clean subprocess because this test module itself (and
         pytest's collection) legitimately imports the integration package.
+        (The dashboard is streamlit-gated and covered by its own tests.)
         """
         import subprocess
         import sys
@@ -205,7 +206,6 @@ class TestBudgetAndDefaults:
             "import sys;\n"
             f"sys.path.insert(0, {repo_src!r});\n"
             "import dreamforge.demo;\n"
-            "import dreamforge.visualization.dashboard;\n"
             "hits = [m for m in sys.modules if m.startswith('dreamforge.integrations')];\n"
             "print('PULLED:' + ','.join(hits) if hits else 'NOT_PULLED')\n"
         )
