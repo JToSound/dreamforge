@@ -148,3 +148,45 @@ git init -b main
 
 (Make targets are documented in ARCHITECTURE.md as plain command equivalents
 because `make` is unavailable on this host.)
+
+---
+
+# Session 2 Plan (2026-08-24, continuation)
+
+## Objective
+
+Close the remaining M1 gap identified in the session-1 release report: prove the
+built wheel installs and behaves identically in a clean environment
+(MASTER_PROMPT.md §3: "Install the built wheel into a clean environment … run
+import smoke tests and tests against that installation").
+
+## In scope
+
+1. Build a wheel (`python -m build --wheel`, build tooling added to constraints).
+2. Create a fresh venv; install ONLY the wheel + pinned constraints.
+3. Import smoke from a neutral cwd: assert the loaded module resolves to
+   site-packages (not src/), re-verify DQCJ byte vectors, and reproduce a
+   small deterministic trace whose core hash matches the dev environment.
+4. Run the full pytest suite against the installed-wheel environment.
+
+## Out of scope
+
+API/dashboard/providers/plugins (still forbidden), CI workflows, packaging
+publishing, benchmark records.
+
+## Acceptance criteria
+
+- Wheel builds; clean venv contains no editable/src path.
+- Smoke script prints ENGINE_PATH under site-packages, vectors pass, and the
+  60-tick trace hash equals the dev-environment hash for identical config+seed.
+- Full suite passes from the clean venv.
+- Release report updated with only observed outcomes.
+
+## Exact commands intended
+
+".venv/Scripts/python.exe" -m pip install build
+".venv/Scripts/python.exe" -m build --wheel
+"C:/Users/User/AppData/Local/Microsoft/WindowsApps/python3.12.exe" -m venv .venv-wheel
+".venv-wheel/Scripts/python.exe" -m pip install -c constraints.txt dist/*.py3-none-any.whl
+cd $LOCALAPPDATA/Temp && ../..../.venv-wheel python scripts/smoke_installed_wheel.py
+".venv-wheel/Scripts/python.exe" -m pytest -q

@@ -2,6 +2,7 @@
 
 Date: 2026-08-24 · Author: DreamForge technical lead session (agent)
 Scope authority: MASTER_PROMPT.md §9 ("First execution only") + §0.2 session protocol.
+Session 2 addendum at the bottom closes the installed-wheel gap.
 
 ## Changed / created files
 
@@ -81,9 +82,72 @@ They are regenerable via the demo command and therefore not committed (gitignore
 
 None. No credentials, network services, or owner approvals were required for this slice.
 
+---
+
+# Session 2 Addendum — Installed-wheel verification (M1 gap closed)
+
+Date: 2026-08-24 (same day, continuation session).
+
+## What was done
+
+1. Built `dist/dreamforge-0.1.0-py3-none-any.whl` (`pip install build`;
+   `python -m build --wheel`) — observed success.
+2. Created a clean venv `.venv-wheel` from WindowsApps python3.12 and installed
+   **only** the wheel + pinned `constraints.txt` — observed success
+   (installed set: dreamforge 0.1.0, numpy 2.5.2, pydantic 2.13.4,
+   networkx 3.6.1 + transitive pins).
+3. Ran `scripts/smoke_installed_wheel.py` from a neutral cwd (TEMP) under the
+   clean venv — all four proofs passed:
+   - proof-1 module path resolves to
+     `.venv-wheel/Lib/site-packages/dreamforge` (no src/editable leakage);
+   - proof-2 all 9 checked-in DQCJ-1 byte vectors reproduce exactly;
+   - proof-3 installed-wheel 60-tick/seed-777001 trace hash equals the dev
+     reference: `85b4a5b2e022d2af88a74f49101a2b84fc6088105c6078466efae1f6aa07014d`
+     (dev value produced by `scripts/record_dev_trace_hash.py` under `.venv`);
+   - proof-4 a full trace re-run with `socket.socket`/`socket.create_connection`
+     monkey-blocked completes with an identical hash → zero connection attempts.
+4. Installed pytest+hypothesis into the clean venv and ran the full suite
+   against the installed wheel: **84 passed**.
+5. The clean-environment Hypothesis run found one legitimate gap the dev run
+   had not hit: the DQCJ round-trip property did not exempt the rule-3 NFC
+   rejection path. Fixed the test to treat `DQCJNormalizationError` as an
+   accepted-input boundary; production code was NOT weakened.
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pip install build` | exit 0 |
+| `.venv/Scripts/python.exe -m build --wheel` | `Successfully built dreamforge-0.1.0-py3-none-any.whl` |
+| python3.12 `-m venv .venv-wheel` + `pip install -c constraints.txt dist/*.whl` | exit 0 |
+| `.venv/Scripts/python.exe scripts/record_dev_trace_hash.py` | `85b4a5b2…07014d` |
+| clean-venv smoke (from `$LOCALAPPDATA/Temp`) | `SMOKE PASS`, proofs 1–4 OK |
+| `.venv-wheel/Scripts/python.exe -m pytest -q` | **84 passed** |
+| `.venv/Scripts/python.exe -m pytest -q` (re-run after fix) | **84 passed** |
+| ruff / black / mypy strict (final sweep) | All checks passed / unchanged / no issues |
+
+## Honest notes
+
+- An earlier draft of proof-4 asserted "no socket module in sys.modules"; that
+  invariant is false-by-construction because pydantic → importlib.metadata →
+  email/zipfile transitively imports stdlib socket/urllib without network use.
+  Replaced with the behavioral zero-connection-attempts proof above.
+- Two smoke-script bugs were found by its own failures (marker string used dots
+  instead of a slash; helper referenced before definition) — both fixed in the
+  script, neither touched library code.
+- `dist/` and `.venv-wheel/` are untracked build artifacts; `dist/` added to
+  .gitignore this session.
+
+## M1 gate status
+
+The last open item ("clean installed-wheel import test") is now closed with
+measured evidence. Remaining pre-gate items are milestone-level (CI workflow,
+container smoke), which MASTER_PROMPT.md assigns to later milestones/M5, not §9.
+
 ## Smallest recommended next step
 
-Close the remaining M1 gap: add a clean-venv wheel-build + install + import-smoke
-test (build wheel, install into fresh venv from `constraints.txt`, import
-`dreamforge.core.serialization.dqcj` and re-verify the checked-in vectors), then
-declare the M1 gate with measured evidence.
+M1's §9-scope items are complete. Next bounded action: begin M2 groundwork —
+deterministic `DreamContext`/`DreamSegment` models, the mandatory offline
+`MockNarrativeProvider`, and structured feature/score separation (MASTER_PROMPT.md
+§5.4, §6.2, milestone M2) — starting with an implementation plan and ADR for the
+provider boundary. No dashboard/API work before the M2 gate (§7).

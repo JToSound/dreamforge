@@ -120,7 +120,14 @@ def test_graph_round_trip_property(n: int, m: int) -> None:
     )
 )
 def test_dqcj_round_trip_json_compatible(obj: object) -> None:
-    text = dumps_canonical(obj).decode("utf-8")
+    from dreamforge.core.serialization.dqcj import DQCJNormalizationError
+
+    try:
+        text = dumps_canonical(obj).decode("utf-8")
+    except DQCJNormalizationError:
+        # Rule 3: non-NFC text is rejected at the canonical boundary; the
+        # round-trip property applies to accepted inputs only.
+        return
     parsed_back = loads_strict(text)
     assert dumps_canonical(parsed_back) == dumps_canonical(obj)
 

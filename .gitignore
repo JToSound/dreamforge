@@ -14,6 +14,9 @@ htmlcov/
 
 # Regenerable run artifacts (recreate with: python -m dreamforge.demo)
 exports/
+dist/
+build/
+.venv-wheel/
 
 # Environment — never commit real credentials (.env.example is the placeholder template)
 .env
