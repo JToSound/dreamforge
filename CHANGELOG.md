@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > DreamForge is a research and visualization simulator. It does not measure brains, diagnose conditions, predict dreams, infer psychological meaning, or provide medical advice.
 
+## [Unreleased]
+
+## [0.2.0] - 2026-08-24
+
+### Added
+
+- Optional networked narrative providers behind an injected HTTP transport
+  (`dreamforge.integrations`, ADR 0005) — the deterministic core remains
+  network-free and the offline mock stays the default:
+  - `OpenAICompatProvider`: any `/chat/completions` endpoint incl. Ollama
+    `/v1`; frozen caller-supplied config; budget enforced before any request;
+    strict response schema; per-attempt timeout; bounded retries then
+    fail-closed; errors redacted to status code + response sha256 only;
+    honest `network_loopback` / `network_remote` egress classification.
+  - `AnthropicCompatProvider`: messages API (top-level system field, required
+    `max_tokens`, temperature 0, `x-api-key` + `anthropic-version` headers,
+    content-block text extraction); retryable set includes Anthropic's 529.
+  - Shared vetted bounded-retry/redaction layer (`integrations/retry.py`,
+    `integrations/errors.py`) used by both adapters.
+- mypy strict coverage widened to the whole integrations package.
+
+[0.2.0]: https://github.com/JToSound/dreamforge/releases/tag/v0.2.0
+
 ## [0.1.0] - 2026-08-24
 
 ### Added
