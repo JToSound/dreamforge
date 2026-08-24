@@ -151,3 +151,49 @@ deterministic `DreamContext`/`DreamSegment` models, the mandatory offline
 `MockNarrativeProvider`, and structured feature/score separation (MASTER_PROMPT.md
 §5.4, §6.2, milestone M2) — starting with an implementation plan and ADR for the
 provider boundary. No dashboard/API work before the M2 gate (§7).
+
+---
+
+# Session 3 Addendum — M2 groundwork (deterministic half)
+
+Date: 2026-08-24 (continuation session).
+
+## What was done
+
+- ADR 0003 accepted: narrative-provider boundary, structural outage isolation,
+  adapters deferred until their full contract is testable offline.
+- `core/models/dream_context.py`: immutable `DreamSegment`/`DreamContext`,
+  segment builder over sleep_state events only, six [0,1] features with
+  documented evidence variables/normalizers/missing-data behaviour, and
+  per-segment replay-token attachment.
+- `core/scoring/bizarreness.py`: validated weights (non-negative, sum-to-one),
+  single terminal clip, B = 100·clip(Σw·f, 0, 1), scorer version recorded;
+  export quantization to two decimals. `unvalidated_secondary_rater`
+  deliberately NOT implemented (disabled by default).
+- `core/providers/narrative.py`: typed `NarrativeProvider` protocol,
+  allowlisted `MinimizedContext` projection (hashed; budget-checked, never
+  silently truncated), credential-free deterministic `MockNarrativeProvider`
+  recording schema/template/context/response hashes + egress class.
+- `simulation/report.py`: composite `RunReport` where every block carries
+  exactly one §1.2 output_class + exact visible label; narrative stays None
+  unless explicitly attached — provider failure leaves a complete report.
+- Demo now prints labeled context/features/score/narrative blocks.
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **110 passed** |
+| `pytest --cov=src/dreamforge/core` | core coverage: dream_context 94%, providers/narrative 97%, scoring/bizarreness 90%; all modules ≥85% |
+| ruff / black / mypy strict (16 source files) | All checks passed / unchanged / no issues |
+| `python -m dreamforge.demo` | full pipeline OK; context blocks labeled mechanistic_proxy; narrative block labeled generative_interpretation |
+
+## Honest notes
+
+- An initial segment "merge short trailing episodes" behaviour mislabeled
+  stages; removed in favour of truthful per-episode segments (docstring
+  documents that min_segment_ticks currently does not merge).
+- The demo initially showed "(none)" tokens because segments were not joined
+  with replay selections; fixed by attaching selections to containing segments.
+- Cloud/local provider adapters remain unimplemented BY DESIGN (ADR 0003);
+  the M2 gate items they belong to stay open until then.

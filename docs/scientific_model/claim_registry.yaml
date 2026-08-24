@@ -92,3 +92,40 @@ claims:
     validation_status: internal_consistency_only
     owner: dreamforge-maintainers
     review_date: "2026-08-24"
+
+  - claim_id: CLM-CTX-001
+    exact_wording: >
+      The six structured dream-context features are deterministic [0,1]
+      functions of emitted simulation events only, with documented evidence
+      variables, normalization denominators, and missing-data behaviour
+      (missing evidence maps to 0.0).
+    implementation: "src/dreamforge/core/models/dream_context.py :: feature_*"
+    equation_or_parameter: "per-feature normalizers (e.g. transitions per epoch / 0.1; CV/(1+CV); entropy/ln(k))"
+    source_key: null
+    evidence_grade: assumption
+    population_context: none — structured indices over synthetic runs
+    limitation: >
+      Normalizers are declared constants of scorer version bizarreness-v1,
+      not empirical calibrations; features carry no clinical or psychological
+      meaning.
+    validation_status: internal_consistency_only
+    owner: dreamforge-maintainers
+    review_date: "2026-08-24"
+
+  - claim_id: CLM-BIZ-001
+    exact_wording: >
+      The bizarreness score is B = 100 x clip(sum_i w_i f_i, 0, 1) with
+      validated non-negative weights summing to 1; it is a structured
+      aggregate of simulated features, never a clinical measure, never
+      human-calibrated, and computed without any LLM rater by default.
+    implementation: "src/dreamforge/core/scoring/bizarreness.py :: score_bizarreness"
+    equation_or_parameter: DEFAULT_BIZARRENESS_WEIGHTS (sum=1)
+    source_key: null
+    evidence_grade: assumption
+    population_context: none — synthetic index
+    limitation: >
+      Weights are assumption-grade policy; an unvalidated_secondary_rater is
+      explicitly NOT implemented (disabled by default per spec §5.4).
+    validation_status: internal_consistency_only
+    owner: dreamforge-maintainers
+    review_date: "2026-08-24"

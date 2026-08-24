@@ -10,14 +10,15 @@ toward the milestone plan in [`MASTER_PROMPT.md`](MASTER_PROMPT.md).
 
 ## Status
 
-First execution slice (M0 partial + M1 vertical slice): deterministic core with
+First execution slice + M1 (complete) and M2 groundwork: deterministic core with
 an 8-hour (960 × 30 s epoch) offline trace, event sourcing, DQCJ-1 canonical
-serialization, and hash-verified exports. See
+serialization, hash-verified exports, structured dream context/features/score,
+and the mandatory offline narrative provider with labeled report blocks. See
 [`ARCHITECTURE.md`](ARCHITECTURE.md), [`RESEARCH.md`](RESEARCH.md),
 [`LIMITATIONS.md`](LIMITATIONS.md), and `docs/`.
 
-**Not yet built** (by explicit scope control): API, dashboard, LLM narrative
-providers, plugins, notebooks.
+**Not yet built** (by explicit scope control): API, dashboard, cloud/LLM
+provider adapters (protocol + offline mock only), plugins, notebooks.
 
 ## What it simulates (and what that means)
 

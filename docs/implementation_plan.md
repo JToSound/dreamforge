@@ -190,3 +190,52 @@ publishing, benchmark records.
 ".venv-wheel/Scripts/python.exe" -m pip install -c constraints.txt dist/*.py3-none-any.whl
 cd $LOCALAPPDATA/Temp && ../..../.venv-wheel python scripts/smoke_installed_wheel.py
 ".venv-wheel/Scripts/python.exe" -m pytest -q
+
+---
+
+# Session 3 Plan (2026-08-24, M2 groundwork)
+
+## Objective
+
+Begin MASTER_PROMPT.md milestone M2 ("Structured generation") with the
+deterministic half only: immutable DreamContext/DreamSegment, six [0,1]
+structured features + weighted bizarreness score (§5.4), the mandatory offline
+MockNarrativeProvider behind a typed protocol (§6.2), and composite-report
+blocks each carrying exactly one primary output_class with the exact visible
+label (§1.2). Plus ADR 0003 for the LLM/provider boundary.
+
+## In scope
+
+docs/adr/0003-narrative-provider-boundary.md;
+src/dreamforge/core/models/dream_context.py;
+src/dreamforge/core/scoring/bizarreness.py (+ public quantize_to in dqcj);
+src/dreamforge/core/providers/narrative.py;
+src/dreamforge/simulation/report.py; demo/report wiring; unit+integration
+tests; RESEARCH.md + claim registry rows.
+
+## Out of scope
+
+LangGraph Layer-B agents, real/cloud provider adapters (declared deferred,
+disabled-by-default in ADR 0003), unvalidated_secondary_rater (disabled by
+default per §5.4 — documented, not implemented), dashboard/API.
+
+## Key design decisions (subject to ADR 0003)
+
+- Context construction is a POST-run pure function over emitted events —
+  providers can therefore never mutate core state, and outage isolation is
+  structurally guaranteed and tested.
+- Features use documented evidence variables, missing-data -> 0.0, explicit
+  normalizers/entropy denominators; score B = 100*clip(Σw·f,0,1) with
+  validated weights (Σ=1, non-negative), scorer version recorded.
+- MockNarrativeProvider renders from an ALLOWLISTED minimized projection only;
+  records provider/model/template/context/response hashes + egress class;
+  stores no prompts/responses. Budget overflow raises typed error (no silent
+  truncation).
+
+## Acceptance criteria
+
+- All features provably in [0,1] incl. missing-data cases (property + unit).
+- Same inputs -> identical context/score/narrative bytes; provider failure
+  changes no core byte (hash equality asserted in test).
+- Every report block serializes with correct exact §1.2 label strings.
+- Full suite passes; coverage stays ≥85% core; ruff/black/mypy clean.

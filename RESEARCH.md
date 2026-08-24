@@ -12,7 +12,8 @@
 | Neuromodulatory proxies (ACh/5-HT/NE/cortisol) | No empirical source verified; `assumption` | Baseline + stage lookup + optional circadian term, transform-then-clip | Simulated model proxy — not a biological measurement | Dimensionless [0,1] indices only; never concentrations |
 | Synthetic memory graph | Not applicable (synthetic input) | Directed weighted NetworkX graph over controlled tokens | Simulated model proxy — not a biological measurement | Labels are synthetic tokens; no real memories ever |
 | Replay selection | Not applicable (policy, not biology) | Weighted normalized contribution formula | Interpretive output — not a scientific inference | Graph selection ≠ neural replay; NREM preference is a declared probabilistic policy |
-| Bizarreness/context features | Deferred to M2 | Deterministic structured features over selected IDs | Simulated model proxy — not a biological measurement | Not built in this slice; will ship with evidence-variable specs |
+| Structured dream-context features (six) | No empirical source verified; `assumption` | Deterministic functions over emitted events (documented normalizers) | Simulated model proxy — not a biological measurement | Evidence variables and missing-data behaviour are declared per feature; no clinical meaning |
+| Bizarreness score B = 100·clip(Σw·f,0,1) | Not applicable (declared policy) | Validated non-negative sum-to-one weights over the six features | Simulated model proxy — not a biological measurement | Weights are assumptions; never human-calibrated or validated; LLM rater disabled by default |
 
 Every public scientific claim is enumerated in
 [`docs/scientific_model/claim_registry.yaml`](docs/scientific_model/claim_registry.yaml)
