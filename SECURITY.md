@@ -59,12 +59,17 @@ with M5)*. Lock updates require re-running the full check suite.
 
 ## Vulnerability reporting
 
-Report privately to the maintainers (contact to be added before first public
-release). Please do not open public issues for security reports.
+Report privately via GitHub Security Advisories:
+<https://github.com/JToSound/dreamforge/security/advisories/new> — or open a
+private security contact through the repository's "Report a vulnerability"
+button. Please do not open public issues for security reports.
 
 ## Supported versions
 
-Only the latest commit on `main` during pre-release development.
+| Version | Supported |
+|---|---|
+| 0.1.x (from tag `v0.1.0`) | ✅ |
+| older commits on `main` | best effort only |
 
 ## Security-test coverage
 
