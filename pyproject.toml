@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dreamforge"
+version = "0.1.0"
+description = "Deterministic, offline sandbox for non-clinical sleep/dream simulation proxies (research and visualization simulator; no medical claims)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary-Placeholder" }
+authors = [{ name = "DreamForge maintainers" }]
+dependencies = [
+    "numpy>=2,<3",
+    "pydantic>=2.7,<3",
+    "networkx>=3.3,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "pytest-cov>=5,<7",
+    "hypothesis>=6,<7",
+    "ruff>=0.6",
+    "black>=24",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+dreamforge-demo = "dreamforge.demo:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "examples"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP"]
+ignore = []
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+strict = true
+files = ["src/dreamforge/core"]
+# Checked under 3.12 semantics because numpy>=2.5 stubs use 3.12-only syntax;
+# the package runtime floor stays >=3.11 and no source uses 3.12-only features.
+python_version = "3.12"
+warn_unreachable = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = "networkx.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "integration: long-running deterministic integration tests",
+    "property: hypothesis property-based tests",
+]

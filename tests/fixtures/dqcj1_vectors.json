@@ -1,0 +1,100 @@
+{
+  "canonicalization": "DQCJ-1",
+  "test_vector_version": "1",
+  "note": "Byte-level vectors generated from a verified execution; regenerated only with a deliberate specification change.",
+  "cases": [
+    {
+      "name": "key_sort_codepoint",
+      "input": {
+        "z": 1,
+        "a": 2,
+        "Z": 3,
+        "A": 4,
+        "0": 5
+      },
+      "quantizations": {},
+      "expected_hex": "7b2230223a352c2241223a342c225a223a332c2261223a322c227a223a317d"
+    },
+    {
+      "name": "array_order_preserved",
+      "input": [
+        3,
+        1,
+        2
+      ],
+      "quantizations": {},
+      "expected_hex": "5b332c312c325d"
+    },
+    {
+      "name": "quant_half_even_down",
+      "input": {
+        "v": 0.1234565
+      },
+      "quantizations": {
+        "v": "0.000001"
+      },
+      "expected_hex": "7b2276223a302e3132333435367d"
+    },
+    {
+      "name": "quant_half_even_up",
+      "input": {
+        "v": 0.1234575
+      },
+      "quantizations": {
+        "v": "0.000001"
+      },
+      "expected_hex": "7b2276223a302e3132333435387d"
+    },
+    {
+      "name": "quant_array_wildcard",
+      "input": {
+        "rows": [
+          {
+            "x": 1.2345649
+          }
+        ]
+      },
+      "quantizations": {
+        "rows.*.x": "0.000001"
+      },
+      "expected_hex": "7b22726f7773223a5b7b2278223a312e3233343536357d5d7d"
+    },
+    {
+      "name": "float_plain_and_negative_zero",
+      "input": {
+        "p": 0.1,
+        "q": 1.5e-07,
+        "n": -0.0
+      },
+      "quantizations": {},
+      "expected_hex": "7b226e223a302e302c2270223a302e312c2271223a312e35652d30377d"
+    },
+    {
+      "name": "unicode_literal_utf8",
+      "input": {
+        "s": "caf\u00e9"
+      },
+      "quantizations": {},
+      "expected_hex": "7b2273223a22636166c3a9227d"
+    },
+    {
+      "name": "bool_and_null",
+      "input": {
+        "t": true,
+        "f": false,
+        "n": null
+      },
+      "quantizations": {},
+      "expected_hex": "7b2266223a66616c73652c226e223a6e756c6c2c2274223a747275657d"
+    },
+    {
+      "name": "empty_containers",
+      "input": {
+        "e": [],
+        "m": {}
+      },
+      "quantizations": {},
+      "expected_hex": "7b2265223a5b5d2c226d223a7b7d7d"
+    }
+  ]
+}

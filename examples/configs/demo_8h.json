@@ -1,0 +1,81 @@
+{
+    "schema_version": "1.0",
+    "run_id": "demo-8h-0001",
+    "run_seed": 20260824,
+    "epoch_seconds": 30.0,
+    "total_ticks": 960,
+    "initial_stage": "Wake",
+    "process_s": {
+        "s_min": 0.0,
+        "s_max": 1.0,
+        "s_initial": 0.65,
+        "tau_wake_minutes": 1140.0,
+        "tau_sleep_minutes": 72.0
+    },
+    "circadian": {
+        "baseline_b": 0.5,
+        "amplitude_a": 0.12,
+        "period_t_minutes": 1440.0,
+        "phase_phi_minutes": 360.0,
+        "amplitude_a2": 0.0,
+        "period_t2_minutes": null,
+        "phase_phi2_minutes": 0.0
+    },
+    "transitions": {
+        "probabilities": {
+            "Wake": {"Wake": 0.0, "N1": 0.70, "N2": 0.25, "N3": 0.0, "REM": 0.05},
+            "N1": {"Wake": 0.10, "N1": 0.0, "N2": 0.75, "N3": 0.10, "REM": 0.05},
+            "N2": {"Wake": 0.08, "N1": 0.12, "N2": 0.0, "N3": 0.45, "REM": 0.35},
+            "N3": {"Wake": 0.04, "N1": 0.06, "N2": 0.62, "N3": 0.0, "REM": 0.28},
+            "REM": {"Wake": 0.35, "N1": 0.35, "N2": 0.24, "N3": 0.06, "REM": 0.0}
+        }
+    },
+    "dwells": {
+        "Wake": {"min_epochs": 4, "weights": [0.4, 1.0, 1.6, 2.2], "max_dwell_epochs": 20},
+        "N1": {"min_epochs": 2, "weights": [2.0, 1.2, 0.6], "max_dwell_epochs": 20},
+        "N2": {"min_epochs": 6, "weights": [1.0, 1.8, 2.2, 1.6, 1.0, 0.6], "max_dwell_epochs": 30},
+        "N3": {"min_epochs": 8, "weights": [1.2, 2.0, 2.4, 1.8, 1.2, 0.8, 0.5, 0.3], "max_dwell_epochs": 40},
+        "REM": {"min_epochs": 4, "weights": [0.6, 1.2, 1.8, 1.4, 1.0, 0.7], "max_dwell_epochs": 30}
+    },
+    "chemistry": {
+        "baselines": {
+            "acetylcholine": 0.45,
+            "serotonin": 0.50,
+            "noradrenaline": 0.40,
+            "cortisol": 0.35
+        },
+        "stage_modulation": {
+            "acetylcholine": {"Wake": -0.10, "N1": 0.05, "N2": 0.15, "N3": -0.05, "REM": 0.35},
+            "serotonin": {"Wake": 0.15, "N1": 0.0, "N2": -0.05, "N3": -0.15, "REM": -0.30},
+            "noradrenaline": {"Wake": 0.20, "N1": -0.05, "N2": -0.10, "N3": -0.20, "REM": -0.25},
+            "cortisol": {"Wake": 0.10, "N1": 0.0, "N2": -0.05, "N3": -0.15, "REM": 0.05}
+        },
+        "circadian_gain": {
+            "acetylcholine": 0.0,
+            "serotonin": 0.0,
+            "noradrenaline": 0.0,
+            "cortisol": 0.10
+        }
+    },
+    "replay_policy": {
+        "synthetic_graph": {
+            "node_count": 24,
+            "edge_count": 48,
+            "seed_token_prefix": "tok"
+        },
+        "selector": {
+            "weights": {
+                "activation": 0.45,
+                "recency": 0.20,
+                "salience": 0.15,
+                "stage": 0.10,
+                "novelty": 0.10
+            },
+            "top_k": 3,
+            "novelty_weight_enabled": true,
+            "recent_window": 12,
+            "min_candidates": 1
+        },
+        "replay_every_n_epochs": 8
+    }
+}

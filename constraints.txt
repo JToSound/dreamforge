@@ -1,0 +1,18 @@
+# DreamForge pinned constraints (lock strategy per MASTER_PROMPT.md §3).
+# Install: python -m venv .venv && .venv/Scripts/python.exe -m pip install -c constraints.txt -e .
+# Pinned to the versions the current suite was verified against (2026-08-24).
+numpy==2.5.2
+pydantic==2.13.4
+pydantic_core==2.46.4
+annotated-types==0.8.0
+typing_extensions==4.16.0
+networkx==3.6.1
+
+# dev / test toolchain
+pytest==8.4.2
+pytest-cov==6.3.0
+coverage==7.15.4
+hypothesis==6.165.10
+ruff==0.16.4
+black==26.5.1
+mypy==2.3.1

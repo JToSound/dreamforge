@@ -1,0 +1,94 @@
+# DreamForge claim registry (MASTER_PROMPT.md §5)
+# Every public scientific claim maps to implementation + evidence metadata.
+# Policy: no citation key may exist until bibliographic metadata AND the exact
+# supported claim are verified. Therefore source_keys are intentionally null
+# below; grades are 'assumption' or 'synthetic_demo' until real verification
+# happens (which would also populate verification_status/review dates).
+meta:
+  version: "1.0.0"
+  updated: "2026-08-24"
+  policy: >
+    A citation key cannot be added until bibliographic metadata and the exact
+    supported claim have been verified. 'assumption' and 'synthetic_demo' items
+    are never described as empirical support.
+claims:
+  - claim_id: CLM-S-001
+    exact_wording: >
+      The homeostatic proxy S approaches S_max while awake and S_min while
+      asleep according to the documented exponential equations, as configured.
+    implementation: "src/dreamforge/core/models/sleep_cycle.py :: SleepRegulationModel.step"
+    equation_or_parameter: "S update; tau_wake, tau_sleep, S_min, S_max"
+    source_key: null
+    evidence_grade: assumption
+    population_context: none — mathematical construct
+    limitation: >
+      Conceptual two-process-inspired proxy; not adenosine dynamics; parameters
+      are configurable assumptions without physiological fitting.
+    validation_status: internal_consistency_only
+    owner: dreamforge-maintainers
+    review_date: "2026-08-24"
+
+  - claim_id: CLM-C-001
+    exact_wording: >
+      The circadian proxy C(t) is a sum of up to two sinusoids as configured;
+      the second harmonic is disabled by default.
+    implementation: "src/dreamforge/core/models/sleep_cycle.py :: circadian_value"
+    equation_or_parameter: "b, A, T, phi, A2, phi2"
+    source_key: null
+    evidence_grade: assumption
+    population_context: none — mathematical construct
+    limitation: Sinusoidal shape is a convention, not a measured rhythm.
+    validation_status: internal_consistency_only
+    owner: dreamforge-maintainers
+    review_date: "2026-08-24"
+
+  - claim_id: CLM-STG-001
+    exact_wording: >
+      Stage evolution follows a semi-Markov process whose every emitted
+      transition is allowed by the exported transition matrix, with bounded
+      integer-epoch dwell distributions under a hard cap.
+    implementation: "src/dreamforge/core/models/sleep_cycle.py :: SleepStageTransitionModel"
+    equation_or_parameter: transition_matrix, dwell_distributions, max_dwell_epochs
+    source_key: null
+    evidence_grade: synthetic_demo
+    population_context: synthetic demonstration data only
+    limitation: >
+      Simulation resolution policy at 30 s epochs; explicitly not PSG scoring;
+      early-night N3 / later-night REM tendencies are hypothesis-tagged policies.
+    validation_status: internal_consistency_only
+    owner: dreamforge-maintainers
+    review_date: "2026-08-24"
+
+  - claim_id: CLM-CHM-001
+    exact_wording: >
+      Each neuromodulatory proxy is a dimensionless value in [0,1] computed as
+      baseline plus stage modulation plus optional circadian term, clipped once
+      to [0,1]; values are qualitative synthetic indices, never concentrations.
+    implementation: "src/dreamforge/core/models/neurochemistry.py :: NeurochemicalProxyModel"
+    equation_or_parameter: baselines, stage_modulation, circadian_gain
+    source_key: null
+    evidence_grade: assumption
+    population_context: none — qualitative index
+    limitation: >
+      Lookup-table shaping; no ODEs, units, or pharmacokinetics; never patient
+      values or medication predictions.
+    validation_status: internal_consistency_only
+    owner: dreamforge-maintainers
+    review_date: "2026-08-24"
+
+  - claim_id: CLM-RPL-001
+    exact_wording: >
+      Replay selection is deterministic weighted graph selection whose exposed
+      contributions sum to 1 across enabled factors; NREM preference is a
+      declared probabilistic policy, not a biological claim.
+    implementation: "src/dreamforge/core/models/memory_graph.py :: ReplayEventScheduler"
+    equation_or_parameter: weights {activation, recency, salience, stage}
+    source_key: null
+    evidence_grade: synthetic_demo
+    population_context: synthetic graph tokens only
+    limitation: >
+      Selection over small synthetic graphs; not neural reactivation; no memory-
+      consolidation claim.
+    validation_status: internal_consistency_only
+    owner: dreamforge-maintainers
+    review_date: "2026-08-24"
