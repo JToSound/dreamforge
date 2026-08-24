@@ -30,3 +30,6 @@ Thumbs.db
 .vscode/
 %SystemDrive%/
 
+
+# benchmark artifacts
+exports/_bench_*
