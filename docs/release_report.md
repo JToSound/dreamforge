@@ -499,3 +499,31 @@ Date: 2026-08-24 (post-0.1.0 continuation).
   validated request only.
 - The OpenAI test suite needed exactly two mechanical edits after the
   refactor (error imports); no assertion was weakened or removed.
+
+---
+
+# Session 12 Addendum — PyPI publication complete
+
+Date: 2026-08-24.
+
+## What was done
+
+- Owner configured the PyPI "pending publisher" (project=dreamforge,
+  owner=JToSound, repo=dreamforge, workflow=release.yml, env=pypi).
+- `.github/workflows/release.yml` added: OIDC trusted publishing (no stored
+  token), sdist+wheel build, `__version__`-vs-tag guard, attestations.
+- Triggered via workflow_dispatch on main; run 32766136466 GREEN
+  (build ✓ publish ✓ incl. digital attestations).
+
+## Verification (observed outcomes)
+
+| Check | Result |
+|---|---|
+| PyPI JSON API | name=dreamforge version=0.2.0 author=JToSound requires_python>=3.11 |
+| Files live | dreamforge-0.2.0-py3-none-any.whl (73,606 B) + .tar.gz (58,422 B) |
+| Clean-venv install | `pip install dreamforge==0.2.0` from PyPI succeeded; `dreamforge.__version__` == 0.2.0 |
+
+Links: https://pypi.org/project/dreamforge/ · https://github.com/JToSound/dreamforge/releases/tag/v0.2.0
+
+Both released versions are now on PyPI's simple index going forward; future
+releases = bump version + tag (or dispatch) with no further setup.
