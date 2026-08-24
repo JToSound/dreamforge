@@ -12,12 +12,8 @@ from dreamforge.core.providers.narrative import (
     MinimizedContext,
     NarrativeRequest,
 )
-from dreamforge.integrations.openai_compat import (
-    OpenAICompatConfig,
-    OpenAICompatProvider,
-    ProviderExhaustedError,
-    ProviderResponseError,
-)
+from dreamforge.integrations.errors import ProviderExhaustedError, ProviderResponseError
+from dreamforge.integrations.openai_compat import OpenAICompatConfig, OpenAICompatProvider
 from dreamforge.integrations.transport import TransportError
 
 

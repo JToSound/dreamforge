@@ -52,7 +52,7 @@ target-version = ["py311"]
 
 [tool.mypy]
 strict = true
-files = ["src/dreamforge/core"]
+files = ["src/dreamforge/core", "src/dreamforge/integrations"]
 # Checked under 3.12 semantics because numpy>=2.5 stubs use 3.12-only syntax;
 # the package runtime floor stays >=3.11 and no source uses 3.12-only features.
 python_version = "3.12"

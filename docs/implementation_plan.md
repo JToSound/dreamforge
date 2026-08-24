@@ -444,3 +444,34 @@ adapter shape.
 - Malformed responses raise typed errors carrying status code + response hash
   only; retry bounds proven by counting attempts on fakes.
 - Core suite stays green; ruff/black/mypy clean; CI green after push.
+
+---
+
+# Session 11 Plan (2026-08-24, post-release: Anthropic-native adapter + type-gate widening)
+
+## Objective
+
+Complete ADR 0005's declared follow-up: the Anthropic-native messages-API
+adapter, sharing one vetted retry/redaction path with the OpenAI-compat
+adapter; widen mypy strict coverage to the integrations package.
+
+## In scope
+
+- integrations/errors.py: shared typed errors; classify_egress() helper.
+- send_with_retry(): single bounded-retry implementation used by BOTH
+  adapters (behavior-preserving refactor of openai_compat, proven by its
+  untouched test suite).
+- integrations/anthropic_compat.py: messages API shape (system prompt field,
+  user message, REQUIRED max_tokens, temperature 0), x-api-key +
+  anthropic-version headers, content-block text extraction.
+- Offline FakeTransport contract suite for the new adapter.
+- mypy files += src/dreamforge/integrations.
+
+## Out of scope
+
+Streaming/SSE, tool-use blocks, PyPI, version bump (owner decides on 0.2.0).
+
+## Acceptance criteria
+
+OpenAI suite passes unchanged after refactor; new suite green; mypy strict
+clean over core+integrations; full gates green; CI green after push.

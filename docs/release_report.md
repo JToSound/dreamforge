@@ -464,3 +464,38 @@ Date: 2026-08-24. CI on latest main confirmed green before starting.
   consumed path is validated, rest deliberately ignored); the
   disabled-by-default probe originally ran in-process where pytest itself had
   already imported the package (now a clean subprocess).
+
+---
+
+# Session 11 Addendum — Anthropic-native adapter + type-gate widening
+
+Date: 2026-08-24 (post-0.1.0 continuation).
+
+## What was done
+
+- Shared vetted retry layer: `integrations/errors.py` (ProviderResponseError /
+  ProviderExhaustedError / classify_egress) and `integrations/retry.py`
+  (`send_with_retry`, `redacted_error`). The OpenAI-compat adapter was
+  refactored onto it behavior-preservingly - its 14-test suite passes
+  UNCHANGED except for error-class import paths.
+- `integrations/anthropic_compat.py`: messages-API adapter (system as
+  top-level field, REQUIRED max_tokens, temperature 0, x-api-key +
+  anthropic-version headers, content-block text concatenation). Retryable
+  status set includes Anthropic's 529 overload code.
+- mypy strict widened: core + integrations = 22 source files clean.
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **175 passed** (14 new Anthropic tests) |
+| ruff / black / mypy strict (22 files) | All checks passed / unchanged / Success |
+
+## Honest notes
+
+- A first refactor draft introduced two regressions (style taken from config
+  instead of request; a monkey-patch seam) and was discarded before commit in
+  favour of a clean rewrite - the committed version takes style from the
+  validated request only.
+- The OpenAI test suite needed exactly two mechanical edits after the
+  refactor (error imports); no assertion was weakened or removed.

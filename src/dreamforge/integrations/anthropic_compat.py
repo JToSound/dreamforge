@@ -1,10 +1,11 @@
-"""OpenAI-compatible narrative provider adapter (ADR 0005).
+"""Anthropic-native messages-API narrative provider adapter (ADR 0005).
 
-Works against any ``/chat/completions``-style endpoint, including Ollama's
-``/v1`` compatibility mode. Constructed EXPLICITLY with a frozen config —
-never enabled by default, never reads environment variables. All contract
-properties (schema validation, timeouts, bounded retries, redacted errors)
-are exercised offline via injected fake transports.
+Same contract as the OpenAI-compat adapter: frozen caller-supplied config,
+explicit construction, allowlisted projection only, strict response schema,
+bounded retries via the shared vetted path, redacted typed errors, honest
+egress classification. Wire differences: ``/v1/messages`` endpoint,
+``x-api-key`` + ``anthropic-version`` headers, system prompt as a top-level
+field, REQUIRED ``max_tokens``, content-block text extraction.
 """
 
 from __future__ import annotations
@@ -23,26 +24,21 @@ from dreamforge.core.providers.narrative import (
     ProviderConfigError,
 )
 from dreamforge.integrations.errors import classify_egress
+from dreamforge.integrations.openai_compat import _SYSTEM_PROMPT
 from dreamforge.integrations.retry import redacted_error, send_with_retry
 from dreamforge.integrations.transport import HttpTransport
 
-_SYSTEM_PROMPT = (
-    "You write short fictional dream-report prose about a SIMULATED sleep "
-    "episode. You receive structured simulation outputs only. You must never "
-    "claim to describe a real person's dream, and never imply measurement of "
-    "any brain or mind."
-)
+ANTHROPIC_VERSION = "2023-06-01"
+_DEFAULT_MAX_TOKENS = 512
+_CLOSING_LINE = "Generated interpretation - not a dream measurement or inference."
+_STYLE_PHRASES = {"plain": "plain factual prose", "poetic": "poetic prose"}
 
-_PROMPT_TEMPLATE_HASH = hashlib.sha256(_SYSTEM_PROMPT.encode("utf-8")).hexdigest()
 _REQUEST_SCHEMA_HASH = hashlib.sha256(
     json.dumps(NarrativeRequest.model_json_schema(), sort_keys=True).encode("utf-8"),
 ).hexdigest()
 
-_STYLE_PHRASES = {"plain": "plain factual prose", "poetic": "poetic prose"}
-_CLOSING_LINE = "Generated interpretation - not a dream measurement or inference."
 
-
-class OpenAICompatConfig(BaseModel):
+class AnthropicCompatConfig(BaseModel):
     """Frozen adapter configuration supplied explicitly by the caller."""
 
     model_config = ConfigDict(frozen=True)
@@ -50,28 +46,24 @@ class OpenAICompatConfig(BaseModel):
     base_url: str = Field(pattern=r"^https?://")
     api_key: str = ""
     model: str = Field(min_length=1)
-    timeout_seconds: float = Field(default=20.0, gt=0, le=120)
+    max_tokens: int = Field(default=_DEFAULT_MAX_TOKENS, ge=16, le=4096)
+    timeout_seconds: float = Field(default=30.0, gt=0, le=120)
     max_retries: int = Field(default=2, ge=0, le=5)
     retry_backoff_seconds: float = Field(default=0.5, ge=0, le=30)
 
 
-class _WireResponse(BaseModel):
-    """Strict schema for the subset of the wire format we consume.
+class _WireMessages(BaseModel):
+    """Subset of the messages-API response we consume (content blocks)."""
 
-    ``choices`` stays ``list[dict]`` (NOT a nested model) so unknown top-level
-    fields of each choice don't trip extra="forbid" — we validate the one
-    path we consume and ignore the rest deliberately.
-    """
-
-    choices: list[dict[str, Any]] = Field(min_length=1)
+    content: list[dict[str, Any]] = Field(min_length=1)
 
 
-class OpenAICompatProvider:
-    """Networked provider behind the same NarrativeProvider protocol."""
+class AnthropicCompatProvider:
+    """Anthropic messages-API provider behind NarrativeProvider."""
 
-    ADAPTER_VERSION = "openai-compat-v1"
+    ADAPTER_VERSION = "anthropic-compat-v1"
 
-    def __init__(self, config: OpenAICompatConfig, transport: HttpTransport) -> None:
+    def __init__(self, config: AnthropicCompatConfig, transport: HttpTransport) -> None:
         self._config = config
         self._transport = transport
         if not config.model.strip():
@@ -79,7 +71,7 @@ class OpenAICompatProvider:
 
     def name(self) -> str:
         """Provider identifier recorded in provenance."""
-        return f"openai-compat({self._config.base_url})"
+        return f"anthropic-compat({self._config.base_url})"
 
     # -- request assembly -----------------------------------------------------
 
@@ -100,12 +92,20 @@ class OpenAICompatProvider:
     def _payload(self, user_message: str) -> dict[str, object]:
         return {
             "model": self._config.model,
-            "messages": [
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
+            "max_tokens": self._config.max_tokens,
             "temperature": 0,
+            "system": _SYSTEM_PROMPT,
+            "messages": [{"role": "user", "content": user_message}],
         }
+
+    def _headers(self) -> dict[str, str]:
+        headers = {
+            "Content-Type": "application/json",
+            "anthropic-version": ANTHROPIC_VERSION,
+        }
+        if self._config.api_key:
+            headers["x-api-key"] = self._config.api_key
+        return headers
 
     # -- protocol --------------------------------------------------------------
 
@@ -114,15 +114,11 @@ class OpenAICompatProvider:
         context = request.minimized_context
         context.enforce_budget()  # BEFORE anything touches the network
 
-        headers = {"Content-Type": "application/json"}
-        if self._config.api_key:
-            headers["Authorization"] = f"Bearer {self._config.api_key}"
-
-        url = self._config.base_url.rstrip("/") + "/chat/completions"
+        url = self._config.base_url.rstrip("/") + "/v1/messages"
         response = send_with_retry(
             transport=self._transport,
             url=url,
-            headers=headers,
+            headers=self._headers(),
             payload=self._payload(self._build_prompt(request)),
             timeout_seconds=self._config.timeout_seconds,
             max_retries=self._config.max_retries,
@@ -130,7 +126,7 @@ class OpenAICompatProvider:
         )
         if response.status != 200:
             raise redacted_error("http_error", response.status, response.body)
-        return _parse_success(
+        return _parse_messages_success(
             response.body,
             request,
             provider_name=self.name(),
@@ -140,7 +136,7 @@ class OpenAICompatProvider:
         )
 
 
-def _parse_success(
+def _parse_messages_success(
     body: bytes,
     request: NarrativeRequest,
     *,
@@ -149,23 +145,24 @@ def _parse_success(
     model: str,
     base_url: str,
 ) -> NarrativeResponse:
-    """Validate a 200 body and build the provenance-carrying response."""
+    """Validate a 200 body (content blocks) and build the response."""
     try:
-        wire = _WireResponse.model_validate(json.loads(body.decode("utf-8")))
+        wire = _WireMessages.model_validate(json.loads(body.decode("utf-8")))
     except (UnicodeDecodeError, json.JSONDecodeError, ValidationError):
         raise redacted_error("response_schema_invalid", 200, body) from None
-    message = wire.choices[0].get("message") or {}
-    text = str(message.get("content", "")).strip()
+    parts = [str(block.get("text", "")) for block in wire.content if block.get("type") == "text"]
+    text = "".join(parts).strip()
     if not text:
         raise redacted_error("empty_completion", 200, body)
     context = request.minimized_context
+    template_bundle = f"{_SYSTEM_PROMPT}|{_CLOSING_LINE}|{ANTHROPIC_VERSION}"
     return NarrativeResponse(
         text=text,
         provider=provider_name,
         adapter_version=adapter_version,
         model=model,
         request_schema_hash=_REQUEST_SCHEMA_HASH,
-        prompt_template_hash=_PROMPT_TEMPLATE_HASH,
+        prompt_template_hash=hashlib.sha256(template_bundle.encode("utf-8")).hexdigest(),
         context_sha256=context.context_sha256(),
         response_sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
         decoding="api:temperature=0",

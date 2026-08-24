@@ -18,7 +18,7 @@ and the mandatory offline narrative provider with labeled report blocks. See
 [`LIMITATIONS.md`](LIMITATIONS.md), and `docs/`.
 
 **Not yet built** (by explicit scope control): API, plugins, notebooks,
-Anthropic-native adapter shape.
+streaming/tool-use adapter features.
 
 ## Optional: local / OpenAI-compatible narrative provider (opt-in)
 
@@ -45,6 +45,11 @@ response = provider.generate(request)  # request = validated NarrativeRequest
 Guarantees (ADR 0005): allowlisted projection only; strict response schema;
 per-attempt timeout; bounded retries then fail-closed; errors redacted to
 status code + response hash; every response labeled `generative_interpretation`.
+
+An Anthropic-native adapter with the same guarantees ships alongside it
+(`AnthropicCompatProvider` — messages API, `x-api-key` +
+`anthropic-version` headers, content-block extraction); both share one
+vetted bounded-retry/redaction implementation (`integrations/retry.py`).
 
 ## Dashboard (optional extras)
 
