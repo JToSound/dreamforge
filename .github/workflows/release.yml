@@ -1,0 +1,64 @@
+# PyPI publication via Trusted Publishing (OIDC) — no API token stored.
+# Requires the PyPI "pending publisher" entry to match EXACTLY:
+#   project=dreamforge owner=JToSound repo=dreamforge workflow=release.yml env=pypi
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+
+      - name: Verify wheel metadata matches tag
+        run: |
+          python - <<'PY'
+          import hashlib, pathlib, sys, zipfile
+          wheels = sorted(pathlib.Path("dist").glob("*.whl"))
+          assert len(wheels) == 1, wheels
+          whl = wheels[0]
+          version = pathlib.Path("src/dreamforge/__init__.py").read_text(encoding="utf-8")
+          assert '__version__ = "0.2.0"' in version, "package __version__ mismatch"
+          print("built:", whl.name)
+          print("sha256:", hashlib.sha256(whl.read_bytes()).hexdigest())
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # Trusted Publishing: short-lived OIDC token minted by GitHub,
+      # matched by PyPI against the pending-publisher entry above.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
