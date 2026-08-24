@@ -197,3 +197,41 @@ Date: 2026-08-24 (continuation session).
   with replay selections; fixed by attaching selections to containing segments.
 - Cloud/local provider adapters remain unimplemented BY DESIGN (ADR 0003);
   the M2 gate items they belong to stay open until then.
+
+---
+
+# Session 4 Addendum — M2 completion: report separation at the export layer
+
+Date: 2026-08-24 (continuation session).
+
+## What was done
+
+- Export layout bumped to v2: `write_export` accepts an optional `RunReport`
+  and embeds it as canonical-bytes `report.json`; the artifact joins the
+  checksum map in verification.json. Layout v1 exports remain importable
+  (documented migration; a v2 declaration without report.json is refused).
+- `import_and_verify` gained typed fail-closed checks: report schema,
+  run_id agreement with the manifest, summary event_count agreement with the
+  actual event stream, exact per-block label contract (§1.2), score bounds,
+  and byte-identical canonical round-trip of the stored report.
+- Demo now writes report.json (import verification grew 20 -> 22 checks).
+- ImportedRun carries the reconstructed labeled report for downstream readers.
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **116 passed** (6 new layout-v2 integration tests) |
+| ruff / black / mypy strict | All checks passed / unchanged / no issues |
+| `python -m dreamforge.demo` | export now includes report.json sha256=...; import verification ok=True checks=22 |
+
+## Honest notes
+
+- The verifier caught a test-helper bug during development (fake event counts
+  disagreed with the actual stream) — exactly the failure mode this check
+  exists for; the helper was fixed to count real events.
+- Legacy-layout support is asserted by downgrading the declared version in a
+  test; no external consumers exist, so migration behaviour is untested
+  against third-party tooling by definition.
+- The demo's exported hashes changed from earlier sessions because the export
+  set itself changed (report.json added); the core trace hash is unchanged.

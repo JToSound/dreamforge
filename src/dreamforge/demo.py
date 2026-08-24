@@ -41,16 +41,6 @@ def main(argv: list[str] | None = None) -> int:
     clock = FixedClock(datetime(2026, 8, 24, 21, 0, 0, tzinfo=UTC))
     result = run_simulation(config, clock)
 
-    checksums = write_export(
-        out_dir=out_dir,
-        events=result.events,
-        manifest=result.manifest,
-        config=config,
-        graph_snapshot=result.graph_snapshot,
-    )
-
-    imported, verification = import_and_verify(out_dir)
-
     # Deterministic context + score from emitted events (post-run projection).
     node_types = {
         str(node["id"]): str(node.get("node_type", "unknown"))
@@ -65,13 +55,24 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     counts = Counter(str(event.event_type) for event in result.events)
-    report = build_report(
+    run_report = build_report(
         context=context,
         event_counts=dict(counts),
         core_trace_hash=result.core_trace_hash,
     )
     provider = MockNarrativeProvider()
-    report, response = attach_narrative(context, report, provider, style="plain")
+    run_report, response = attach_narrative(context, run_report, provider, style="plain")
+
+    checksums = write_export(
+        out_dir=out_dir,
+        events=result.events,
+        manifest=result.manifest,
+        config=config,
+        graph_snapshot=result.graph_snapshot,
+        report=run_report,
+    )
+
+    imported, verification = import_and_verify(out_dir)
 
     print(DISCLAIMER)
     print(f"config: {config_path}")

@@ -78,6 +78,27 @@ def test_960_epoch_trace_deterministic_and_verified(
         assert len(e.payload.selected_node_ids) == k
 
     # --- export / import parity -------------------------------------------
+    from collections import Counter
+
+    from dreamforge.core.models.dream_context import build_dream_context
+    from dreamforge.simulation.report import build_report
+
+    context = build_dream_context(
+        run_id=config.run_id,
+        schema_version="1.0",
+        total_ticks=config.total_ticks,
+        events=list(events),
+        node_type_lookup={
+            str(n["id"]): str(n.get("node_type", "unknown"))
+            for n in result_a.graph_snapshot["nodes"]
+        },
+    )
+    counts_dict = dict(Counter(str(event.event_type) for event in events))
+    labeled_report = build_report(
+        context=context,
+        event_counts=counts_dict,
+        core_trace_hash=result_a.core_trace_hash,
+    )
     out_dir = tmp_path / "export_demo"
     write_export(
         out_dir=out_dir,
@@ -85,11 +106,18 @@ def test_960_epoch_trace_deterministic_and_verified(
         manifest=result_a.manifest,
         config=config,
         graph_snapshot=result_a.graph_snapshot,
+        report=labeled_report,
     )
     imported, report = import_and_verify(out_dir)
     assert report.ok
     assert imported.manifest.core_trace_hash == result_a.core_trace_hash
     assert len(imported.events) == len(events)
+    # v2: the labeled report survives byte-identical and keeps its labels
+    assert imported.report is not None
+    assert (
+        imported.report.summary.visible_label
+        == "Simulated model proxy — not a biological measurement"
+    )
 
     # tampering with any byte must fail verification (fail closed)
     ndjson_path = out_dir / "events.ndjson"
@@ -128,12 +156,31 @@ def test_render_without_execution(tmp_path) -> None:
     }
     config = load_config(payload)
     result = run_simulation(config, FixedClock(datetime(2026, 8, 24, tzinfo=UTC)))
+    from dreamforge.core.models.dream_context import build_dream_context
+    from dreamforge.simulation.report import build_report
+
+    context = build_dream_context(
+        run_id=config.run_id,
+        schema_version="1.0",
+        total_ticks=payload["total_ticks"],
+        events=list(result.events),
+    )
+    counts = {
+        event_type: sum(1 for e in result.events if e.event_type == event_type)
+        for event_type in {str(e.event_type) for e in result.events}
+    }
+    report = build_report(
+        context=context,
+        event_counts=counts,
+        core_trace_hash=result.core_trace_hash,
+    )
     write_export(
         out_dir=tmp_path / "x",
         events=result.events,
         manifest=result.manifest,
         config=config,
         graph_snapshot=result.graph_snapshot,
+        report=report,
     )
 
     probe = (

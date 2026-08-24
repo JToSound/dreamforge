@@ -36,8 +36,24 @@ from dreamforge.core.serialization.dqcj import (
     dumps_canonical,
     loads_strict,
 )
+from dreamforge.simulation.report import (
+    GENERATIVE_LABEL,
+    MECHANISTIC_LABEL,
+    OUTPUT_CLASS_GENERATIVE,
+    OUTPUT_CLASS_MECHANISTIC,
+    RunReport,
+)
 
-EXPORT_LAYOUT_VERSION = "1"
+EXPORT_LAYOUT_VERSION = "2"
+
+_CORE_EXPORT_FILES = (
+    "events.ndjson",
+    "manifest.json",
+    "config.canonical.json",
+    "verification.json",
+    "graph_snapshot.json",
+    "README.txt",
+)
 
 _MAX_IMPORT_BYTES = 64 * 1024 * 1024
 _MAX_EVENTS_PER_EXPORT = 200_000
@@ -59,6 +75,7 @@ class ImportedRun:
     manifest: SimulationRunManifest
     config: SimulationConfig
     graph_snapshot: dict[str, Any]
+    report: RunReport | None = None
 
 
 @dataclass
@@ -109,8 +126,13 @@ def write_export(
     manifest: SimulationRunManifest,
     config: SimulationConfig,
     graph_snapshot: dict[str, Any],
+    report: RunReport | None = None,
 ) -> dict[str, str]:
-    """Write the versioned export layout; returns artifact checksums."""
+    """Write the versioned export layout; returns artifact checksums.
+
+    Layout v2 additionally embeds ``report.json`` when a :class:`RunReport` is
+    supplied; the artifact joins the checksum map and import verification.
+    """
     out_dir = Path(out_dir)
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -141,6 +163,10 @@ def write_export(
     config_bytes = dumps_config_canonical(config)
     (out_dir / "config.canonical.json").write_bytes(config_bytes)
 
+    if report is not None:
+        report_bytes = dumps_canonical(report.model_dump())
+        (out_dir / "report.json").write_bytes(report_bytes)
+
     checksums = {
         "events.ndjson": hashlib.sha256(
             (out_dir / "events.ndjson").read_bytes(),
@@ -153,6 +179,10 @@ def write_export(
         ).hexdigest(),
         "config.canonical.json": hashlib.sha256(config_bytes).hexdigest(),
     }
+    if report is not None:
+        checksums["report.json"] = hashlib.sha256(
+            (out_dir / "report.json").read_bytes(),
+        ).hexdigest()
 
     verification = {
         "layout_version": EXPORT_LAYOUT_VERSION,
@@ -215,6 +245,13 @@ def import_and_verify(export_dir: Path) -> tuple[ImportedRun, VerificationReport
     verification = loads_strict(
         (export_dir / "verification.json").read_text(encoding="utf-8"),
     )
+    layout_version = str(verification.get("layout_version", "1"))
+    has_report = (export_dir / "report.json").is_file()
+    if layout_version == "2" and not has_report:
+        raise ImportError_(
+            "layout_files_present",
+            "layout v2 requires report.json",
+        )
 
     # --- manifest first: later checks need its declared policies ------------
     manifest = SimulationRunManifest.model_validate(
@@ -383,6 +420,44 @@ def import_and_verify(export_dir: Path) -> tuple[ImportedRun, VerificationReport
         dumps_canonical(reserialized) == dumps_canonical(graph_payload),
     )
 
+    # --- labeled report contract (layout v2) -------------------------------------------------
+    run_report: RunReport | None = None
+    if has_report:
+        report_bytes_raw = (export_dir / "report.json").read_bytes()
+        try:
+            run_report = RunReport.model_validate(loads_strict(report_bytes_raw.decode("utf-8")))
+        except ValueError as exc:
+            raise ImportError_("report_schema_valid", str(exc)) from exc
+        if run_report.run_id != manifest.run_id:
+            msg = f"report run_id {run_report.run_id!r} != manifest {manifest.run_id!r}"
+            raise ImportError_("report_run_id_matches", msg)
+        summary_count = int(run_report.summary.event_count)
+        if summary_count != len(events):
+            msg = f"report event_count {summary_count} != {len(events)}"
+            raise ImportError_("report_event_count_matches", msg)
+        for block_name, output_class, label in (
+            ("summary", OUTPUT_CLASS_MECHANISTIC, MECHANISTIC_LABEL),
+            ("features_block", OUTPUT_CLASS_MECHANISTIC, MECHANISTIC_LABEL),
+        ):
+            block = getattr(run_report, block_name)
+            if block.output_class != output_class or block.visible_label != label:
+                msg = f"block {block_name} violates the §1.2 label contract"
+                raise ImportError_("report_labels_exact", msg)
+        narrative = run_report.narrative
+        if narrative is not None and (
+            narrative.output_class != OUTPUT_CLASS_GENERATIVE
+            or narrative.visible_label != GENERATIVE_LABEL
+        ):
+            msg = "narrative block violates the §1.2 label contract"
+            raise ImportError_("report_labels_exact", msg)
+        score = float(run_report.features_block.score_bizarreness_0_100)
+        if not 0.0 <= score <= 100.0:
+            raise ImportError_("report_score_bounded", str(score))
+        recomputed_report_bytes = dumps_canonical(run_report.model_dump())
+        if recomputed_report_bytes != report_bytes_raw:
+            raise ImportError_("report_round_trip_lossless", "bytes differ")
+        report.record("report_contract", "pass")
+
     report.ok = True
     return (
         ImportedRun(
@@ -390,6 +465,7 @@ def import_and_verify(export_dir: Path) -> tuple[ImportedRun, VerificationReport
             manifest=manifest,
             config=config,
             graph_snapshot=reserialized,
+            report=run_report,
         ),
         report,
     )

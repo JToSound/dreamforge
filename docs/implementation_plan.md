@@ -239,3 +239,34 @@ default per §5.4 — documented, not implemented), dashboard/API.
   changes no core byte (hash equality asserted in test).
 - Every report block serializes with correct exact §1.2 label strings.
 - Full suite passes; coverage stays ≥85% core; ruff/black/mypy clean.
+
+---
+
+# Session 4 Plan (2026-08-24, M2 completion: report separation at export layer)
+
+## Objective
+
+Make the labeled composite report a first-class verified export artifact so
+M2's "score, and report separation" holds at the file layer, not just in
+memory: report.json inside the export, covered by a checksum and by fail-closed
+import verification of its label contract.
+
+## In scope
+
+- Export layout v2: write_export gains optional `report`; when present the
+  layout version bumps to "2" and report.json + SHA-256 join verification.json.
+  Layout v1 exports remain importable (documented migration; no other consumers).
+- import_and_verify: for v2, re-validate report.json strictly - schema, exact
+  labels per block, run_id agreement with manifest, summary event_count
+  agreement, bounded score, well-formed hashes - and its stored checksum.
+- Demo writes the report; render-without-execution proof extended to v2.
+
+## Out of scope
+
+Dashboard/API (M3+, gated), provider adapters (ADR 0003), counterfactuals (M4).
+
+## Acceptance criteria
+
+- Round trip byte-identical; tampering any report field fails typed.
+- v1 exports still verify; v2 without report.json refuses.
+- Full suite green; coverage >=85%; ruff/black/mypy clean.
