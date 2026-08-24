@@ -9,7 +9,7 @@ typing_extensions==4.16.0
 networkx==3.6.1
 
 # dev / test toolchain
-pytest==8.4.2
+pytest==9.0.3
 pytest-cov==6.3.0
 coverage==7.15.4
 hypothesis==6.165.10

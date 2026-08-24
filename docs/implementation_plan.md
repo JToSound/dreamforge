@@ -378,3 +378,37 @@ pharmacology scenarios, M5 release chores.
 - Recurrence output derives provably from stored records; identical inputs ->
   identical bytes; labels exact.
 - Full suite green; ruff/black/mypy clean.
+
+---
+
+# Session 8 Plan (2026-08-24, M5 release preparation)
+
+## Objective
+
+Owner decision received: MIT. Execute M5 chores that need no further owner
+input; draft the remaining checklist with explicit owner-action markers.
+
+## In scope
+
+- LICENSE (MIT, copyright 2026 JToSound - matches the owner's GitHub handle;
+  trivially editable); pyproject license field; README license section.
+- CHANGELOG.md (Keep a Changelog format, 0.1.0 entry).
+- .github/workflows/ci.yml (ruff/black/mypy strict/pytest/build/wheel-install
+  smoke on 3.11+3.12 matrix). Local equivalence runs recorded; the workflow
+  itself executes only when pushed to GitHub (no remote by current setup).
+- Container smoke: Dockerfile (slim python:3.12), .dockerignore; if the host
+  has Docker, build and run the test suite inside the image - observed result
+  recorded either way.
+- pip-audit over the environment if network permits; otherwise documented.
+- Rebuild wheel after metadata change; regenerate demo export; inspect.
+- docs/M5_CHECKLIST.md with done/pending-owner items.
+
+## Out of scope
+
+PyPI publishing (needs owner accounts/decisions), SBOM formats beyond what
+actually runs, real provider adapters (ADR 0003).
+
+## Acceptance criteria
+
+All executed items have observed outcomes in the release report; anything not
+run is listed as NOT RUN without success language. Suite stays green.

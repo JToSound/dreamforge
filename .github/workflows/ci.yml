@@ -1,0 +1,77 @@
+# CI equivalent for DreamForge (MASTER_PROMPT.md §7/M5).
+# Runs when pushed to GitHub; local equivalents are documented in
+# docs/release_report.md and were executed on the dev host.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package + toolchain (pinned)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -c constraints.txt -e .
+          python -m pip install -c constraints.txt pytest pytest-cov hypothesis ruff black mypy
+
+      - name: Ruff (lint)
+        run: python -m ruff check src tests examples scripts
+
+      - name: Black (format check)
+        run: python -m black --check src tests examples scripts
+
+      - name: mypy strict (core)
+        if: matrix.python-version == '3.12'
+        run: python -m mypy src/dreamforge/core
+
+      - name: Pytest with coverage gate
+        run: >
+          python -m pytest -q
+          --cov=src/dreamforge/core --cov-report=term-missing
+          --cov-fail-under=85
+
+  build-and-wheel-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build wheel
+        run: |
+          python -m pip install build
+          python -m build --wheel
+      - name: Clean-venv install + vector smoke
+        run: |
+          python -m venv .venv-wheel
+          .venv-wheel/bin/python -m pip install -c constraints.txt dist/*.whl
+          .venv-wheel/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+          from dreamforge.core.serialization.dqcj import dumps_canonical
+          payload = json.loads(Path("tests/fixtures/dqcj1_vectors.json").read_text(encoding="utf-8"))
+          for case in payload["cases"]:
+              data = dumps_canonical(case["input"], quantizations=case["quantizations"])
+              assert data.hex() == case["expected_hex"], case["name"]
+          print("wheel smoke: vectors OK")
+          PY

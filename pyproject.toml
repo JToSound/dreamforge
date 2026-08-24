@@ -8,8 +8,8 @@ version = "0.1.0"
 description = "Deterministic, offline sandbox for non-clinical sleep/dream simulation proxies (research and visualization simulator; no medical claims)."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Proprietary-Placeholder" }
-authors = [{ name = "DreamForge maintainers" }]
+license = { file = "LICENSE" }
+authors = [{ name = "JToSound" }]
 dependencies = [
     "numpy>=2,<3",
     "pydantic>=2.7,<3",
@@ -22,7 +22,7 @@ dashboard = [
     "plotly>=5.22",
 ]
 dev = [
-    "pytest>=8,<9",
+    "pytest>=9.0.3",
     "pytest-cov>=5,<7",
     "hypothesis>=6,<7",
     "ruff>=0.6",

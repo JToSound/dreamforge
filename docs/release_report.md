@@ -347,3 +347,47 @@ Date: 2026-08-24 (continuation session).
 - Night records store summaries, not full traces; exports remain the full-
   fidelity artifact. A test initially used ids shorter than the documented
   pattern - the pattern held, the fixture was fixed.
+
+---
+
+# Session 8 Addendum — M5 release preparation
+
+Date: 2026-08-24 (continuation session). Owner decision received and applied: MIT.
+
+## What was done
+
+- LICENSE committed (MIT, © 2026 JToSound); pyproject license/author fields
+  updated; README finalized; wheel rebuilt — METADATA verified:
+  `Author: JToSound`, `License: MIT License`, `License-File: LICENSE`.
+- CHANGELOG.md created (Keep a Changelog, full 0.1.0 entry).
+- `.github/workflows/ci.yml`: lint/format/mypy-strict/pytest with coverage
+  gate on a 3.11+3.12 matrix, plus build + clean-venv vector smoke.
+- Local gate equivalence executed: pytest `--cov-fail-under=85` → **91.74%**,
+  147 passed.
+- Demo export regenerated and inspected: trace hash unchanged
+  (`e86cd340…afee27b`), manifest hash stable, 22/22 verification checks,
+  7 artifacts.
+- Dockerfile + .dockerignore added (multi-stage; test target runs the suite).
+- pip-audit executed against constraints.txt: found PYSEC-2026-1845
+  (pytest<9.0.3); **upgraded pytest to 9.0.3**, full suite green again;
+  re-audit clean (61 packages, 0 vulns). Artifact:
+  `artifacts/pip-audit-0.1.0.json`.
+- `docs/M5_CHECKLIST.md`: done items with evidence + explicit owner-action
+  list (GitHub push, PyPI go/no-go, SECURITY contact, human wording review).
+
+## Commands actually run (observed outcomes)
+
+| Command | Outcome |
+|---|---|
+| `pytest -q --cov=src/dreamforge/core --cov-fail-under=85` | Required coverage reached: 91.74%; 147 passed |
+| `python -m build --wheel` | success; METADATA verified via zipfile inspection |
+| `pip_audit -r constraints.txt` (run twice) | first: 1 finding (pytest) → fixed; second: EXIT=0, AUDIT_CLEAN |
+| `pytest -q` under pytest 9.0.3 | 147 passed (no compatibility issues) |
+| `docker build …` | FAILED TO RUN: Docker Desktop engine not running on host (daemon pipe absent) |
+
+## NOT RUN / honest gaps
+
+- In-container test execution did NOT happen (daemon down). The Dockerfile is
+  provided but its CMD is unverified until someone runs it with the daemon up.
+- CI workflow has never executed (no remote). All listed steps mirror locally
+  verified commands except the GitHub Actions runtime itself.

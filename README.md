@@ -77,5 +77,4 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the diagram and component table.
 
 ## License
 
-To be finalized before any release (tracked in the release report). No license
-file is committed until that decision is recorded.
+MIT — see [`LICENSE`](LICENSE). Copyright (c) 2026 JToSound.
