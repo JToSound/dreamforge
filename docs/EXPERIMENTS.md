@@ -116,8 +116,7 @@ Reproduce everything:
 
 # Round 2 — applying the findings, closing the validity threats (2026-08-25)
 
-Round 2 (`scripts/experiment_round2.py`, raw data in
-`exports/_experiment_round2.json`) turns the four threats into measured
+Round 2 (`scripts/experiment_round2.py`) turns the four threats into measured
 answers, plus one product change born from the degenerate-dwell finding.
 
 ## E6 — the dwell knob actually works (finding applied)
@@ -166,21 +165,82 @@ full five-stage coverage visited where reachable. No crash, no drift.
 ## E10 — cross-platform determinism proven (T4 closed)
 
 Committed payload + expectation (`exports/_determinism_payload.json` /
-`_determinism_expected.txt`); `determinism.yml` recomputes on ubuntu-latest:
-
-```
-expected : 6cde82043384ebee72508a358a9b7b0b6631e6be9cdbe28f04369611687878ec
-computed : 6cde82043384ebee72508a358a9b7b0b6631e6be9cdbe28f04369611687878ec
-```
-
-**Byte-exact Windows ↔ ubuntu match**, now continuously enforced in CI.
+`_determinism_expected.txt`); `determinism.yml` recomputes on ubuntu-latest.
+**Byte-exact Windows ↔ ubuntu match**, continuously enforced in CI.
 (First run failed operationally: the expectation file was swallowed by the
 `exports/` gitignore rule — fixed with negation rules; the hash itself
 matched on the first true comparison.)
 
-Reproduce round 2:
+---
+
+# Round 3 — micro-probe finds an off-by-one; fix + re-run (2026-08-25)
+
+Writing the E8 dwell verification exposed a discrepancy worth probing:
+`scripts/microprobe_dwell.py` drove the transition model directly with a
+degenerate `min_epochs=3` prior and compared reported vs drawn dwells.
+
+## The finding: `completed_dwell_epochs` was inflated by one
+
+| Level | Observed |
+|---|---|
+| model-level probe | first stage correct (3); every later transition reported **4** |
+| engine-level histogram (600 epochs) | `{3: 1, 4: 199}` |
+
+Root cause in `SleepStageTransitionModel.advance()`: on a boundary tick the
+counter was reset to `ticks_in_current_stage = 1`, but that tick had already
+been counted as the outgoing stage's final epoch — double-counting it. Only
+the constructor-drawn initial stage was unaffected (hence the lone `3`).
+
+This is exactly what the degenerate-prior corner is *for*: with all mass on
+one point, any counting error becomes visible as an exact, reproducible
+wrong value instead of noise inside a distribution.
+
+## Fix (RED → GREEN)
+
+Two regression tests were written first against the drawn-dwell semantics:
+
+- `test_degenerate_dwell_completed_equals_drawn` — failed with `{3, 4} == {3}` before the fix;
+- `test_completed_dwell_matches_drawn_distribution` — per-stage completed means must track the closed-form weighted means.
+
+Fix: the incoming stage now starts at `ticks_in_current_stage = 0`
+(`remaining_epochs = next_dwell` unchanged) so the boundary tick belongs
+solely to the outgoing stage; docstring states the boundary semantics.
+After the fix the same probe yields `{3: 200}` and both tests pass
+(186 suite-wide).
+
+## Consequences for round-2 numbers (re-measured honestly)
+
+The bug inflated every *reported* mean by +1 epoch, so pre-fix E6/E8 dwell
+numbers were biased, not wrong-shaped: e.g. degenerate prior "2.000" was
+really 1.000; uniform-1..8 "5.429" was really ~4.43. Re-runs after the fix:
+
+- **E7 stationary GoF re-run** (single-point priors): observed fractions now
+  match the analytic π_time to within **0.46 pp**, χ² = 3.71, df = 4,
+  **p = 0.447** (was 0.095 with inflated dwells).
+- **E8 multi-point verification re-run** (28,800 epochs, 20 seeds):
+  per-stage |observed − closed-form| ≤ **0.103 epochs**, all five stage
+  histograms pass χ² GoF at α=.05 (worst p = 0.110); cross-seed transition
+  counts are stochastic again under real priors (142.4 ± 4.41 over 20
+  members).
+- **Trace hash changed** (engine arithmetic order is part of the hash):
+  determinism baseline regenerated (`b2234aae…f8e563933`) and enforced via
+  `determinism.yml`; demo trace-hash references elsewhere in docs describe
+  pre-fix builds and are historical.
+
+## Threats-to-validity list, updated
+
+| Threat | Status |
+|---|---|
+| T1 informal SE comparison | closed (E7 formal χ², now p = 0.447 post-fix) |
+| T2 single-run timing jitter | closed (E6 warmup + CV stats) |
+| T3 no adversarial sweep | closed (E9 ε ∈ {0.50, 0.85, 0.97}, invariants hold) |
+| T4 single-platform hashes | closed (E10 CI-enforced byte-exact match) |
+| measurement-tool validity | **new, closed**: micro-probe practice adopted; harness bugs (E1 exec/JSON escaping) and the advance() off-by-one were both caught this way |
+
+Reproduce round 2 / round 3 checks:
 
 ```bash
-".venv/Scripts/python.exe" scripts/experiment_round2.py            # all
-".venv/Scripts/python.exe" scripts/experiment_round2.py E6 E9      # subset
+".venv/Scripts/python.exe" scripts/experiment_round2.py            # all families
+".venv/Scripts/python.exe" scripts/microprobe_dwell.py             # boundary semantics probe
+".venv/Scripts/python.exe" scripts/determinism_hash.py             # current baseline value
 ```

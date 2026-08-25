@@ -358,6 +358,15 @@ class SleepStageTransitionModel:
         Returns ``(transition_info_or_None, ticks_in_stage_after_advance)``
         where ``ticks_in_stage`` counts the completed epochs in the current
         stage *including* this one.
+
+        Boundary semantics (regression-tested): the tick on which a dwell
+        expires is the FINAL epoch of the outgoing stage —
+        ``completed_dwell_epochs`` therefore equals the drawn dwell exactly,
+        and the incoming stage's first epoch is the NEXT tick. (Earlier
+        versions reset ``ticks_in_current_stage`` to 1 on the boundary tick
+        itself, double-counting it and inflating every reported completed
+        dwell of non-initial stages by one; found experimentally via
+        scripts/microprobe_dwell.py.)
         """
         self.remaining_epochs -= 1
         self.ticks_in_current_stage += 1
@@ -376,9 +385,11 @@ class SleepStageTransitionModel:
                 tick=tick,
             )
             self.current_stage = nxt
+            # The new stage occupies its full drawn dwell starting from the
+            # NEXT tick; this boundary tick already belonged to the outgoing
+            # stage, so ticks_in starts at 0 (NOT 1 - that was the off-by-one).
             self.remaining_epochs = next_dwell
-            # This tick is the first epoch of the new stage (1-based counting).
-            self.ticks_in_current_stage = 1
+            self.ticks_in_current_stage = 0
         else:
             self.remaining_epochs = self._draw_dwell(nxt)
         return info, self.ticks_in_current_stage

@@ -105,6 +105,63 @@ class TestTransitions:
             model.advance(tick=0)
         assert model.resample_count == 0
 
+    def test_degenerate_dwell_completed_equals_drawn(self) -> None:
+        """Regression: completed_dwell_epochs must equal the drawn dwell.
+
+        Found experimentally (scripts/microprobe_dwell.py): with a degenerate
+        ``min_epochs=3, weights=(1.0,)`` prior every transition reported
+        ``completed=4`` because the boundary tick was counted once for the old
+        stage and once again as the first epoch of the new stage.
+        """
+        matrix = TransitionMatrixConfig(
+            probabilities={
+                s: {t: (0.25 if i != j else 0.0) for j, t in enumerate(ALL_STAGES)}
+                for i, s in enumerate(ALL_STAGES)
+            },
+        )
+        dwells = {
+            s: DwellDistribution(min_epochs=3, weights=(1.0,), max_dwell_epochs=10)
+            for s in ALL_STAGES
+        }
+        model = SleepStageTransitionModel(matrix, dwells, rng=np.random.default_rng(7))
+        completed: list[int] = []
+        for tick in range(200):
+            info, _ticks_in_stage = model.advance(tick)
+            if info is not None:
+                completed.append(info.completed_dwell_epochs)
+        assert completed, "expected transitions to occur"
+        assert set(completed) == {3}
+
+    def test_completed_dwell_matches_drawn_distribution(self) -> None:
+        """Multi-point prior: per-stage completed means track drawn means."""
+        matrix = TransitionMatrixConfig(probabilities=DEFAULT_TRANSITIONS)
+        dwells = {
+            s: DwellDistribution(min_epochs=m, weights=w, max_dwell_epochs=40)
+            for s, m, w in (
+                ("Wake", 2, (1.0, 3.0)),
+                ("N1", 2, (3.0, 1.0)),
+                ("N2", 3, (1.0, 1.0, 4.0)),
+                ("N3", 5, (2.0, 2.0, 1.0, 1.0)),
+                ("REM", 3, (1.0, 2.0)),
+            )
+        }
+        model = SleepStageTransitionModel(matrix, dwells, rng=np.random.default_rng(11))
+        sums: dict[str, list[int]] = {s: [] for s in ALL_STAGES}
+        for tick in range(4000):
+            info, _ticks_in_stage = model.advance(tick)
+            if info is not None:
+                sums[info.from_stage].append(info.completed_dwell_epochs)
+        expected = {
+            "Wake": (2 * 1 + 3 * 3) / 4,
+            "N1": (2 * 3 + 3 * 1) / 4,
+            "N2": (3 * 1 + 4 * 1 + 5 * 4) / 6,
+            "N3": (5 * 2 + 6 * 2 + 7 * 1 + 8 * 1) / 6,
+            "REM": (3 * 1 + 4 * 2) / 3,
+        }
+        for stage, want in expected.items():
+            got = sum(sums[stage]) / len(sums[stage])
+            assert abs(got - want) < 0.35, (stage, got, want)
+
     def test_support_exceeding_cap_rejected_at_construction(self) -> None:
         with pytest.raises(ValueError, match="support exceeds"):
             DwellDistribution(min_epochs=10, weights=(1.0,), max_dwell_epochs=5)
