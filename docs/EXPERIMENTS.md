@@ -96,16 +96,91 @@ nor drifts out of bounds even at 92k events in one process.
 ## Threats to validity (honest list)
 
 - Single machine, single OS, no warmup; timings have ±10% run-to-run jitter.
+  **→ Addressed in Round 2 (E8, E10).**
 - Dwell distributions in E3/E5 are degenerate single-point priors; results
   characterise that corner, not multi-point dwell behaviour.
+  **→ Applied and resolved in Round 2 (E6).**
 - Stage-fraction deviations were compared to multinomial SE informally, not
-  with a formal goodness-of-fit test.
+  with a formal goodness-of-fit test. **→ Formalised in Round 2 (E7).**
 - E4's "long night" uses the same uniform-matrix family; adversarial matrices
-  (near-deterministic) were not swept.
+  (near-deterministic) were not swept. **→ Swept in Round 2 (E9).**
 
 Reproduce everything:
 
 ```bash
 ".venv/Scripts/python.exe" scripts/experiment.py          # all families
 ".venv/Scripts/python.exe" scripts/experiment.py E1 E3    # subset
+```
+
+---
+
+# Round 2 — applying the findings, closing the validity threats (2026-08-25)
+
+Round 2 (`scripts/experiment_round2.py`, raw data in
+`exports/_experiment_round2.json`) turns the four threats into measured
+answers, plus one product change born from the degenerate-dwell finding.
+
+## E6 — the dwell knob actually works (finding applied)
+
+Multi-point priors over durations 1..cap, all invariants held:
+
+| Prior | support | transitions | mean completed dwell | sd |
+|---|---|---|---|---|
+| degenerate `[1.0]` | 1..1 | 4,800 | 2.000 | 0.014 |
+| geometric p=0.45 | 1..8 | 2,238 | 3.144 | 1.466 |
+| uniform 1..8 | 1..8 | 1,083 | 5.429 | 2.297 |
+| right-skewed peak@4 | 1..12 | — | — | — |
+
+The knob moves mean completed dwell from 2.0 → 5.4 epochs and transition
+counts fall accordingly — **stage-transition counts are a function of the
+dwell prior once it has more than one support point**, resolving the E3
+degeneracy finding. Cap monotonicity re-tested under a real multi-point
+prior: cap 4/8/16 → transitions 1062/910/885 (monotonically fewer) and mean
+completed dwell 2.81/3.11/3.16 (monotonically longer). The engine also now
+**declares per-stage dwell degeneracy inside every manifest**
+(`dwell_degeneracy` policy block) so downstream consumers can detect
+structural transition counts honestly; covered by 9 new unit tests.
+
+## E7 — formal chi-square goodness-of-fit (T1 formalised)
+
+Uniform matrix, n=9,600 sleep-state epochs, seed 2024:
+χ² = **7.91**, df = 4, **p = 0.095** → consistent with the declared uniform
+distribution at α = .05 (p > .05). Implemented with a pure-python regularised
+upper incomplete gamma (no scipy added). Counts: Wake 1926 / N1 1981 / N2
+1898 / N3 1968 / REM 1827.
+
+## E8 — warmup timing statistics (T2 addressed)
+
+1920-tick run ×12 repeats: median **0.452 s**, p95 0.469 s, min 0.426 s,
+**CV 3.2%** — timing noise is small enough for single-run benchmarks to be
+directionally trustworthy, and hashes were identical across all repeats.
+
+## E9 — adversarial matrices (T3 swept)
+
+Near-deterministic rows (0.98 target + 0.02 split), three hostile shapes —
+Wake→N1→N2→N3→REM cycle; everything-to-REM; N2↔N3 flip-flop — plus a
+near-absorbing REM row (0.999). **All four**: engine stable, every observed
+transition was a declared-positive probability, chemistry stayed in [0,1],
+full five-stage coverage visited where reachable. No crash, no drift.
+
+## E10 — cross-platform determinism proven (T4 closed)
+
+Committed payload + expectation (`exports/_determinism_payload.json` /
+`_determinism_expected.txt`); `determinism.yml` recomputes on ubuntu-latest:
+
+```
+expected : 6cde82043384ebee72508a358a9b7b0b6631e6be9cdbe28f04369611687878ec
+computed : 6cde82043384ebee72508a358a9b7b0b6631e6be9cdbe28f04369611687878ec
+```
+
+**Byte-exact Windows ↔ ubuntu match**, now continuously enforced in CI.
+(First run failed operationally: the expectation file was swallowed by the
+`exports/` gitignore rule — fixed with negation rules; the hash itself
+matched on the first true comparison.)
+
+Reproduce round 2:
+
+```bash
+".venv/Scripts/python.exe" scripts/experiment_round2.py            # all
+".venv/Scripts/python.exe" scripts/experiment_round2.py E6 E9      # subset
 ```
