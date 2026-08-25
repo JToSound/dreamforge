@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0",
+  "run_id": "r2-960-777",
+  "run_seed": 777,
+  "total_ticks": 960,
+  "transitions": {
+    "probabilities": {
+      "Wake": {
+        "Wake": 0.0,
+        "N1": 0.25,
+        "N2": 0.25,
+        "N3": 0.25,
+        "REM": 0.25
+      },
+      "N1": {
+        "Wake": 0.25,
+        "N1": 0.0,
+        "N2": 0.25,
+        "N3": 0.25,
+        "REM": 0.25
+      },
+      "N2": {
+        "Wake": 0.25,
+        "N1": 0.25,
+        "N2": 0.0,
+        "N3": 0.25,
+        "REM": 0.25
+      },
+      "N3": {
+        "Wake": 0.25,
+        "N1": 0.25,
+        "N2": 0.25,
+        "N3": 0.0,
+        "REM": 0.25
+      },
+      "REM": {
+        "Wake": 0.25,
+        "N1": 0.25,
+        "N2": 0.25,
+        "N3": 0.25,
+        "REM": 0.0
+      }
+    }
+  },
+  "dwells": {
+    "Wake": {
+      "min_epochs": 1,
+      "weights": [
+        1.0
+      ],
+      "max_dwell_epochs": 8
+    },
+    "N1": {
+      "min_epochs": 1,
+      "weights": [
+        1.0
+      ],
+      "max_dwell_epochs": 8
+    },
+    "N2": {
+      "min_epochs": 1,
+      "weights": [
+        1.0
+      ],
+      "max_dwell_epochs": 8
+    },
+    "N3": {
+      "min_epochs": 1,
+      "weights": [
+        1.0
+      ],
+      "max_dwell_epochs": 8
+    },
+    "REM": {
+      "min_epochs": 1,
+      "weights": [
+        1.0
+      ],
+      "max_dwell_epochs": 8
+    }
+  },
+  "chemistry": {
+    "baselines": {
+      "acetylcholine": 0.5,
+      "serotonin": 0.5,
+      "noradrenaline": 0.5,
+      "cortisol": 0.5
+    },
+    "stage_modulation": {
+      "acetylcholine": {
+        "Wake": 0.0,
+        "N1": 0.0,
+        "N2": 0.0,
+        "N3": 0.0,
+        "REM": 0.0
+      },
+      "serotonin": {
+        "Wake": 0.0,
+        "N1": 0.0,
+        "N2": 0.0,
+        "N3": 0.0,
+        "REM": 0.0
+      },
+      "noradrenaline": {
+        "Wake": 0.0,
+        "N1": 0.0,
+        "N2": 0.0,
+        "N3": 0.0,
+        "REM": 0.0
+      },
+      "cortisol": {
+        "Wake": 0.0,
+        "N1": 0.0,
+        "N2": 0.0,
+        "N3": 0.0,
+        "REM": 0.0
+      }
+    },
+    "circadian_gain": {
+      "acetylcholine": 0.0,
+      "serotonin": 0.0,
+      "noradrenaline": 0.0,
+      "cortisol": 0.0
+    }
+  },
+  "replay_policy": {
+    "synthetic_graph": {
+      "node_count": 50,
+      "edge_count": 120
+    },
+    "selector": {
+      "top_k": 3
+    },
+    "replay_every_n_epochs": 5
+  }
+}

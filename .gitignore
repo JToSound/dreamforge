@@ -33,3 +33,7 @@ Thumbs.db
 
 # benchmark artifacts
 exports/_bench_*
+
+# determinism expectation baseline IS committed (cross-platform check)
+!exports/_determinism_expected.txt
+!exports/_determinism_payload.json
