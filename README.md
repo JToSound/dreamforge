@@ -16,6 +16,7 @@ serialization, hash-verified exports, structured dream context/features/score,
 and the mandatory offline narrative provider with labeled report blocks. See
 [`ARCHITECTURE.md`](ARCHITECTURE.md), [`RESEARCH.md`](RESEARCH.md),
 [`LIMITATIONS.md`](LIMITATIONS.md), [`PERFORMANCE.md`](docs/PERFORMANCE.md),
+[`EXPERIMENTS.md`](docs/EXPERIMENTS.md),
 and `docs/`.
 
 **Not yet built** (by explicit scope control): API, plugins, notebooks,
