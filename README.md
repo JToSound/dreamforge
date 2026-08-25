@@ -19,8 +19,9 @@ and the mandatory offline narrative provider with labeled report blocks. See
 [`EXPERIMENTS.md`](docs/EXPERIMENTS.md),
 and `docs/`.
 
-**Not yet built** (by explicit scope control): API, plugins, notebooks,
-streaming/tool-use adapter features.
+**Not yet built** (by explicit scope control): API, plugins, notebooks.
+Roadmap tracks completed: Layer-B agents (§6.1), fictional pharmacology
+(§5.5, disabled by default), streaming/tool-use adapters (ADR 0005+).
 
 ## Optional: local / OpenAI-compatible narrative provider (opt-in)
 

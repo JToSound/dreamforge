@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Layer-B agent roster (§6.1): seven read-only observer agents over event
+  streams (`dreamforge/agents/`), typed command gate with audit trail
+  (stage-transition policy disabled by default; chemistry writes bounded),
+  and an optional LangGraph bridge that produces results identical to the
+  dependency-free pure-Python orchestration. Core never imports the package.
+- Fictional pharmacology plugin (§5.5): inert without an explicit identity-free
+  acknowledgement containing "fictional"; qualitative per-channel/stage deltas
+  applied to config copies with a full audit trail; `collective_metaphor`
+  remains a permanently refusing placeholder.
+- Streaming + tool-use adapters (ADR 0005+): SSE aggregation for OpenAI-style
+  `stream=true` chunks and Anthropic `content_block_delta` events, incremental
+  chunk callbacks, raw tool-call/tool-use surfaces for caller-owned tool loops,
+  redacted stream-frame errors.
+
 ## [0.2.0] - 2026-08-24
 
 ### Added
