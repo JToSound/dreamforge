@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-25
+
 ### Added
 
 - Layer-B agent roster (§6.1): seven read-only observer agents over event
@@ -24,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `stream=true` chunks and Anthropic `content_block_delta` events, incremental
   chunk callbacks, raw tool-call/tool-use surfaces for caller-owned tool loops,
   redacted stream-frame errors.
+
+### Fixed
+
+- Engine: `completed_dwell_epochs` double-counted the boundary tick
+  (found via degenerate-prior micro-probe, docs/EXPERIMENTS.md Round 3);
+  determinism baseline regenerated.
+
+[0.3.0]: https://github.com/JToSound/dreamforge/releases/tag/v0.3.0
 
 ## [0.2.0] - 2026-08-24
 
