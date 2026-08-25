@@ -41,6 +41,7 @@ from dreamforge.core.models.sleep_cycle import (
     SleepRegulationModel,
     SleepStageTransitionModel,
     StageTransitionInfo,
+    config_dwell_degeneracy,
 )
 from dreamforge.core.provenance.clock import Clock
 
@@ -246,6 +247,9 @@ def run_simulation(
         input_data_sha256=None,
         declared_policies={
             "stage_process": stage_policy,
+            # Honest disclosure: degenerate single-point dwell priors make
+            # stage-transition counts structural (see docs/EXPERIMENTS.md E3).
+            "dwell_degeneracy": config_dwell_degeneracy(config.dwells),
             "replay_selection": replay_policy,
             "graph": {
                 "serializer": GraphSerializerV1.VERSION,

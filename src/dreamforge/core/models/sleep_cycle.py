@@ -212,8 +212,29 @@ class DwellDistribution(_ValidatedModel):
         return self
 
 
+def dwell_distribution_is_degenerate(dwell: DwellDistribution) -> bool:
+    """True when the distribution always yields the same dwell length.
+
+    A distribution is *degenerate* when its normalized weights put all mass
+    on a single support point (e.g. ``weights=[1.0]``): every draw is
+    identical, so stage-transition counts become structurally fixed rather
+    than stochastic. Discovered experimentally — see docs/EXPERIMENTS.md
+    (E3 dwell-cap sensitivity) and docs/PERFORMANCE.md.
+    """
+    positive = [w for w in dwell.weights if w > 0.0]
+    if len(positive) != 1:
+        return False
+    return bool(min(positive) / sum(positive) >= 1.0 - 1e-12)
+
+
+def config_dwell_degeneracy(
+    dwells: dict[StageName, DwellDistribution],
+) -> dict[str, bool]:
+    """Per-stage degeneracy map for manifest declaration."""
+    return {stage: dwell_distribution_is_degenerate(d) for stage, d in sorted(dwells.items())}
+
+
 DEFAULT_DWELL_WEIGHTS: dict[StageName, tuple[float, ...]] = {
-    # Declared synthetic_demo policies (hypothesis-tagged shapes, not PSG data).
     "Wake": (0.4, 1.0, 1.6, 2.2),
     "N1": (2.0, 1.2, 0.6),
     "N2": (1.0, 1.8, 2.2, 1.6, 1.0, 0.6),

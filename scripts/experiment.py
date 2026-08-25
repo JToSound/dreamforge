@@ -137,22 +137,30 @@ def e1_determinism() -> dict:
     }
 
 
-# --- E2: scalability -----------------------------------------------------------
+# --- E2: scalability (upgraded: warmup + repeats, median + jitter) -------------
 
 
 def e2_scalability() -> list[dict]:
+    """Median-of-5 with a warmup run per size; jitter = (max-min)/median."""
     rows = []
     for ticks in (480, 960, 1920, 4800, 9600):
-        t0 = time.perf_counter()
-        result = run(payload(ticks=ticks))
-        elapsed = time.perf_counter() - t0
+        run(payload(ticks=ticks))  # warmup: imports, caches, allocator
+        times = []
+        events = 0
+        for _ in range(5):
+            t0 = time.perf_counter()
+            result = run(payload(ticks=ticks))
+            times.append(time.perf_counter() - t0)
+            events = len(result.events)
+        med = statistics.median(times)
         rows.append(
             {
                 "ticks": ticks,
-                "seconds": round(elapsed, 3),
-                "epochs_per_s": round(ticks / elapsed),
-                "events": len(result.events),
-                "bytes_ndjson_estimate": len(result.events) * 240,
+                "repeats": 5,
+                "median_seconds": round(med, 4),
+                "jitter_frac": round((max(times) - min(times)) / med, 3),
+                "epochs_per_s_median": round(ticks / med),
+                "events": events,
             },
         )
     return rows

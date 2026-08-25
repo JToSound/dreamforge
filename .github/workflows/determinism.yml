@@ -1,0 +1,45 @@
+# Cross-platform determinism check (T4 from docs/EXPERIMENTS.md).
+# Compares the trace hash produced on ubuntu-latest against the committed
+# expectation generated on the development machine. Byte-exact equality is
+# expected because all arithmetic is pinned numpy + DQCJ-1 canonical JSON.
+
+name: determinism
+
+on:
+  push:
+    paths:
+      - "exports/_determinism_expected.txt"
+      - "scripts/determinism_hash.py"
+      - "src/dreamforge/**"
+      - ".github/workflows/determinism.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned toolchain
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -c constraints.txt -e .
+
+      - name: Compute hash on this platform
+        run: python scripts/determinism_hash.py | tee computed.txt
+
+      - name: Compare with committed expectation
+        run: |
+          expected=$(tr -d '[:space:]' < exports/_determinism_expected.txt)
+          computed=$(tr -d '[:space:]' < computed.txt)
+          echo "expected : $expected"
+          echo "computed : $computed"
+          test -n "$expected"
+          test "$expected" = "$computed"
